@@ -1,4 +1,18 @@
+#include <freertos/FreeRTOS.h>
+
+#include "led_driver/LEDDriver.h"
+
 extern "C" void app_main(void)
 {
-    while (true);
+    LEDDriver driver(GPIO_NUM_4, 3);
+
+    bool on = true;
+
+    while (true)
+    {
+        driver.wait();
+        driver.set(on ? 0xFFFFFFFFFF : 0);
+        on = !on;
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
 }
