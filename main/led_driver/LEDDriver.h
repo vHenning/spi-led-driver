@@ -34,6 +34,11 @@ private:
         /// It is linked to our three private encoder functions (encoderEncode, encoderReset and encoderDelete).
         /// It uses the other two encoders in this struct when encoding.
         rmt_encoder_t parentEncoder;
+
+        /// Reset: Ready to encode some raw data
+        /// Complete: Raw data encoding finished, just need to attach the reset word
+        /// Memory Full: Not used here.
+        rmt_encode_state_t state;
         
         /// Converts raw color data to esp rmt data
         rmt_encoder_handle_t dataEncoder;

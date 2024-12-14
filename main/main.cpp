@@ -4,7 +4,7 @@
 
 extern "C" void app_main(void)
 {
-    LEDDriver driver(GPIO_NUM_4, 3);
+    LEDDriver driver(GPIO_NUM_4, 30);
 
     bool on = true;
 

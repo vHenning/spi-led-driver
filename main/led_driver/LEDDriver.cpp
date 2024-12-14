@@ -8,9 +8,7 @@ LEDDriver::LEDDriver(gpio_num_t pin, size_t leds)
     , colorBuffer(NULL)
 {
     const int CHANNELS = 5; // Red, Green, Blue, Cold white, Warm white
-    const int CHANNEL_BITS = 8;
     const int CHANNEL_BYTES = 1;
-    const int BITS_PER_LED = CHANNELS * CHANNEL_BITS;
 
     colorBuffer = new uint8_t[LED_COUNT * CHANNELS * CHANNEL_BYTES];
 
@@ -22,7 +20,7 @@ LEDDriver::LEDDriver(gpio_num_t pin, size_t leds)
     config.clk_src = RMT_CLK_SRC_APB;
     config.gpio_num = pin;
     config.intr_priority = 0;
-    config.mem_block_symbols = LED_COUNT * BITS_PER_LED;
+    config.mem_block_symbols = 512;
     config.resolution_hz = RESOLUTION_HZ;
     config.trans_queue_depth = 4;
     config.flags.with_dma = 0;
@@ -59,6 +57,8 @@ LEDDriver::LEDDriver(gpio_num_t pin, size_t leds)
     ledEncoder.parentEncoder.encode = &LEDDriver::encoderEncode;
     ledEncoder.parentEncoder.reset = &LEDDriver::encoderReset;
     ledEncoder.parentEncoder.del = &LEDDriver::encoderDelete;
+
+    ledEncoder.state = RMT_ENCODING_RESET;
 }
 
 void LEDDriver::set(uint64_t color)
@@ -81,19 +81,53 @@ void LEDDriver::wait()
 size_t IRAM_ATTR LEDDriver::encoderEncode(rmt_encoder_t* encoder, rmt_channel_handle_t tx_channel, const void* primary_data, size_t data_size, rmt_encode_state_t* ret_state)
 {
     EncoderContainer* instance = __containerof(encoder, EncoderContainer, parentEncoder);
+    rmt_encode_state_t resultState = RMT_ENCODING_RESET;
+    size_t encoded = 0;
 
-    size_t encoded = instance->dataEncoder->encode(instance->dataEncoder, tx_channel, primary_data, data_size, ret_state);
-    encoded += instance->resetEncoder->encode(instance->resetEncoder, tx_channel, &instance->resetWord, sizeof(instance->resetWord), ret_state);
+    if (instance->state == RMT_ENCODING_RESET)
+    {
+        // Encode raw data
+        encoded += instance->dataEncoder->encode(instance->dataEncoder, tx_channel, primary_data, data_size, &resultState);
 
+        if (resultState & RMT_ENCODING_COMPLETE)
+        {
+            // Encoded all raw data. Proceed with reset word.
+            instance->state = RMT_ENCODING_COMPLETE;
+        }
+        if (resultState & RMT_ENCODING_MEM_FULL)
+        {
+            // Memory full. Return. This function will be called again when memory is available.
+            *ret_state = RMT_ENCODING_MEM_FULL;
+            return encoded;
+        }
+    }
+
+    if (instance->state == RMT_ENCODING_COMPLETE)
+    {
+        // All raw data was encoded, append reset word
+        encoded += instance->resetEncoder->encode(instance->resetEncoder, tx_channel, &instance->resetWord, sizeof(instance->resetWord), &resultState);
+
+        if (resultState & RMT_ENCODING_COMPLETE)
+        {
+            // We are done with this batch.
+            instance->state = RMT_ENCODING_RESET;
+        }
+    }
+    *ret_state = resultState;
     return encoded;
 }
 
 esp_err_t LEDDriver::encoderReset(rmt_encoder_t* encoder)
 {
-    return ESP_ERR_INVALID_STATE;
+    EncoderContainer* container = __containerof(encoder, EncoderContainer, parentEncoder);
+    esp_err_t error = ESP_OK;
+    error |= rmt_encoder_reset(container->dataEncoder);
+    error |= rmt_encoder_reset(container->resetEncoder);
+    container->state = RMT_ENCODING_RESET;
+    return error;
 }
 
 esp_err_t LEDDriver::encoderDelete(rmt_encoder_t* encoder)
 {
-    return ESP_ERR_INVALID_STATE;
+    return ESP_OK;
 }
