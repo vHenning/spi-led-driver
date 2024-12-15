@@ -1,6 +1,8 @@
 #ifndef COLOR_CONVERTER_H
 #define COLOR_CONVERTER_H
 
+#include <inttypes.h>
+
 namespace ColorConverter
 {
 
@@ -18,6 +20,12 @@ typedef struct {
 
 hsv rgb2hsv(rgb in);
 rgb hsv2rgb(hsv in);
+
+/// Converts given color to 8 bit values saved in the least significant bits of the returned integer
+/// Color order is Green Red Blue
+/// @param in Color to convert to 8 bit values
+/// @return Format 0xGGRRBB
+uint64_t to8BitGRB(const rgb in);
 
 } // namespace ColorConverter
 

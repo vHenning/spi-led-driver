@@ -61,6 +61,12 @@ LEDDriver::LEDDriver(gpio_num_t pin, size_t leds)
     ledEncoder.state = RMT_ENCODING_RESET;
 }
 
+void LEDDriver::set(size_t index, uint64_t color)
+{
+    const int BYTES_PER_LED = 5;
+    memcpy(&colorBuffer[index * BYTES_PER_LED], &color, BYTES_PER_LED);
+}
+
 void LEDDriver::set(uint64_t color)
 {
     const int BYTES_PER_LED = 5;

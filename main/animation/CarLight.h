@@ -1,14 +1,15 @@
 #ifndef CAR_LIGHT_H
 #define CAR_LIGHT_H
 
-#include "../led_driver/LEDDriver.h"
+#include <stddef.h>
+
 #include "filters/RC.h"
 #include "colors/ColorConverter.h"
 
 class CarLight
 {
 public:
-    CarLight(const int pin, const double stepTime, const int ledCount, const ColorConverter::rgb lightColor);
+    CarLight(const double stepTime, const int ledCount, const ColorConverter::rgb lightColor);
 
     void step();
 
@@ -28,6 +29,13 @@ public:
 
     void policeOn();
     void policeOff();
+
+    /// Get current colors of all LEDs (Pixels)
+    /// @return Array with size of pixel count (use getPixelCount())
+    ColorConverter::rgb* getPixels() const;
+
+    /// Get Pixel (LED) count
+    size_t getPixelCount() const;
 
 private:
     bool on;
@@ -78,8 +86,6 @@ private:
     double blinkerOffTime;
     const double blinkerSpeed = 40; // LEDs per second
     const double blinkerPause = 0.3; // seconds
-
-    LEDDriver* driver;
 };
 
 #endif

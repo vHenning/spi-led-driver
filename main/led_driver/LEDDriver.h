@@ -12,6 +12,9 @@ public:
     /// @param color Color data to send to all LEDs. We use the 40 least significant bits. 8 bit per color.
     void set(uint64_t color);
 
+    /// Set single Pixel/LED color at index without writing to LEDs
+    void set(size_t index, uint64_t color);
+
     /// Sets all LEDs the given color
     void set(uint8_t red, uint8_t green, uint8_t blue, uint8_t warm, uint8_t cold);
 

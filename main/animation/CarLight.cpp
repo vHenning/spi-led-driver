@@ -8,7 +8,7 @@
 #include "colors/ColorConverter.h"
 #include "colors/GammaCorrection.h"
 
-CarLight::CarLight(const int pin, const double stepTime, const int ledCount, const ColorConverter::rgb lightColor)
+CarLight::CarLight(const double stepTime, const int ledCount, const ColorConverter::rgb lightColor)
     : on(false)
     , braking(false)
     , emergencyBraking(false)
@@ -33,9 +33,6 @@ CarLight::CarLight(const int pin, const double stepTime, const int ledCount, con
     , blinkerPosition(0)
     , blinkerOffTime(0)
 {
-    ESP_LOGI("Driver", "New Driver at pin %d, %d LEDs", pin, leds); // TODO without this line LEDDriver does not work
-    driver = new LEDDriver(static_cast<gpio_num_t>(pin), leds);
-
     for (size_t i = 0; i < ledCount; ++i)
     {
         colors[i] = ColorConverter::rgb(0, 0, 0);
@@ -151,11 +148,21 @@ void CarLight::step()
         uint8_t red = gamma8[static_cast<uint8_t>(rgb.r * max)];
         uint8_t green = gamma8[static_cast<uint8_t>(rgb.g * max)];
         uint8_t blue = gamma8[static_cast<uint8_t>(rgb.b * max)];
-        driver->set(i, red, green, blue, 0, 0);
-    }
 
-    driver->wait();
-    driver->refresh();
+        colors[i].r = red / max;
+        colors[i].g = green / max;
+        colors[i].b = blue / max;
+    }
+}
+
+ColorConverter::rgb* CarLight::getPixels() const
+{
+    return colors;
+}
+
+size_t CarLight::getPixelCount() const
+{
+    return leds;
 }
 
 void CarLight::turnOn()

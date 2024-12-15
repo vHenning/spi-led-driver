@@ -1,6 +1,7 @@
 #include <freertos/FreeRTOS.h>
 
 #include "animation/CarLight.h"
+#include "led_driver/LEDDriver.h"
 
 #include <esp_timer.h>
 #include <esp_log.h>
@@ -11,9 +12,12 @@ const double FREQUENCY = 50; // [Hz]
 const double PERIOD = 1 / FREQUENCY; // seconds
 const int64_t PERIOD_MILLIS = PERIOD * 1000; // ms
 
+#define LED_COUNT 20
+
 extern "C" void app_main(void)
 {
-    CarLight light(4, PERIOD, 20, ColorConverter::rgb(1, 0, 0));
+    CarLight light(PERIOD, LED_COUNT, ColorConverter::rgb(1, 0, 0));
+    LEDDriver driver(GPIO_NUM_4, LED_COUNT);
 
     bool on = true;
     int counter = 0;
@@ -37,6 +41,16 @@ extern "C" void app_main(void)
         }
 
         light.step();
+
+        ColorConverter::rgb* colors = light.getPixels();
+
+        for (int i = 0; i < LED_COUNT; ++i)
+        {
+            driver.set(i, ColorConverter::to8BitGRB(colors[i]));
+        }
+
+        driver.wait();
+        driver.refresh();
 
         xTaskDelayUntil(&previousWake, pdMS_TO_TICKS(PERIOD_MILLIS));
     }
