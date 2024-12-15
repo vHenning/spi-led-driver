@@ -22,13 +22,13 @@ public:
     void turnOnEmergencyBrake();
     void turnOffEmergencyBrake();
 
-    void left();
-    void right();
-    void indicatorOff();
-    void hazard();
+    void turnOnLeft();
+    void turnOnRight();
+    void turnOnHazard();
+    void turnOffBlinker();
 
-    void policeOn();
-    void policeOff();
+    void turnOnPolice();
+    void turnOffPolice();
 
     /// Get current colors of all LEDs (Pixels)
     /// @return Array with size of pixel count (use getPixelCount())
@@ -56,7 +56,7 @@ private:
     bool turnFilterOffAfterChange;
 
     int emergencyBrakeCounter;
-    bool turnOffBlinker;
+    bool turnOffBlinkerWhenDone;
 
     unsigned int policeCounter;
     bool police;

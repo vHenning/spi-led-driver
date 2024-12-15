@@ -22,7 +22,7 @@ CarLight::CarLight(const double stepTime, const int ledCount, const ColorConvert
     , turnFilterOnAfterChange(false)
     , turnFilterOffAfterChange(false)
     , emergencyBrakeCounter(0.0)
-    , turnOffBlinker(false)
+    , turnOffBlinkerWhenDone(false)
     , policeCounter(0)
     , police(false)
     , blinker(OFF)
@@ -53,10 +53,10 @@ void CarLight::step()
     }
     if (blinkerPosition > indicatorWidth)
     {
-        if (turnOffBlinker)
+        if (turnOffBlinkerWhenDone)
         {
             blinker = OFF;
-            turnOffBlinker = false;
+            turnOffBlinkerWhenDone = false;
         }
         blinkerPosition = 0;
         blinkerOffTime = 0;
@@ -210,47 +210,47 @@ void CarLight::turnOffEmergencyBrake()
     }
 }
 
-void CarLight::left()
+void CarLight::turnOnLeft()
 {
     if (blinker == OFF)
     {
         blinkerPosition = 0;
     }
     blinker = LEFT;
-    turnOffBlinker = false;
+    turnOffBlinkerWhenDone = false;
 }
 
-void CarLight::right()
+void CarLight::turnOnRight()
 {
     if (blinker == OFF)
     {
         blinkerPosition = 0;
     }
     blinker = RIGHT;
-    turnOffBlinker = false;
+    turnOffBlinkerWhenDone = false;
 }
 
-void CarLight::indicatorOff()
-{
-    turnOffBlinker = true;
-}
-
-void CarLight::hazard()
+void CarLight::turnOnHazard()
 {
     if (blinker == OFF)
     {
         blinkerPosition = 0;
     }
     blinker = HAZARD;
-    turnOffBlinker = false;
+    turnOffBlinkerWhenDone = false;
 }
 
-void CarLight::policeOn()
+void CarLight::turnOffBlinker()
+{
+    turnOffBlinkerWhenDone = true;
+}
+
+void CarLight::turnOnPolice()
 {
     police = true;
 }
 
-void CarLight::policeOff()
+void CarLight::turnOffPolice()
 {
     police = false;
 }
