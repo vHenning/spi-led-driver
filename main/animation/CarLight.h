@@ -38,34 +38,25 @@ public:
     size_t getPixelCount() const;
 
 private:
+    /// Holds colors for each pixel (=LED)
+    ColorConverter::rgb* colors;
+
+    /// Filters for each pixel
+    RC* filters;
+
+    /// How much time passes inbetween step() calls [seconds]
+    const double STEP_SIZE;
+
+    /// Total number of LEDs (=pixels)
+    const int LED_COUNT;
+
+    /// The base color we display if we are on and nothing is happening
+    ColorConverter::rgb baseColor;
+
+    /// The general state that can be modified using the public turnOn/Off() functions
     bool on;
     bool braking;
     bool emergencyBraking;
-
-    ColorConverter::rgb* colors;
-    RC* filters;
-    double stepSize;
-    int leds;
-
-    ColorConverter::rgb color;
-    double brightness;
-    const double NORMAL_BRIGHTNESS = 0.3;
-    const double BRAKE_BRIGHTNESS = 1.0;
-    bool useFilter;
-    bool turnFilterOnAfterChange;
-    bool turnFilterOffAfterChange;
-
-    int emergencyBrakeCounter;
-    bool turnOffBlinkerWhenDone;
-
-    unsigned int policeCounter;
-    bool police;
-
-    /**
-     * percent of whole light strip
-     */
-    const float indicatorWidth = 0.2;
-
     enum Blinker
     {
         OFF,
@@ -73,17 +64,52 @@ private:
         RIGHT,
         HAZARD
     } blinker;
+    bool policeOn;
 
-    /**
-     * Position and filter for the on/off animation
-     */
+    /// Brightness of all LEDs
+    double brightness;
+
+    /// Use individual LED filters?
+    bool useFilter;
+
+    /// Turn individual LED filters on/off after animation complete?
+    bool turnFilterOnAfterChange;
+    bool turnFilterOffAfterChange;
+
+    /// Frequency of emergency brake pulses [Hz]
+    const double EMERGENCY_BRAKE_FREQUENCY = 5;
+
+    /// Counts the steps spent in emergency brake mode
+    int emergencyBrakeCounter;
+
+    /// Position and filter for the on/off animation
     double position;
     RC positionFilter;
 
+    /// Speed of blinker animation [% of total strip per second]
+    const double BLINKER_SPEED = 0.3;
+
+    /// Time in between blinks [seconds]
+    const double BLINKER_PAUSE = 0.3;
+
+    /// Width of one blinker [% of total strip]
+    const float BLINKER_WIDTH = 0.2;
+
+    /// [% of total strip]
     double blinkerPosition; // [% of total strip]
+
+    /// Time blinker was already off in between blinks [seconds]
     double blinkerOffTime;
-    const double blinkerSpeed = 0.3; // % of total strip per second
-    const double blinkerPause = 0.3; // seconds
+
+    /// When the blinker is turned off by the user, we finish the current blink before turning it off.
+    /// With this we remember that we want to turn the blinker off when we are finished.
+    bool turnOffBlinkerWhenDone;
+
+    /// Counts the steps spent in police mode [-]
+    unsigned int policeCounter;
+
+    const double NORMAL_BRIGHTNESS = 0.3;
+    const double BRAKE_BRIGHTNESS = 1.0;
 };
 
 #endif
