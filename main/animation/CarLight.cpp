@@ -32,6 +32,7 @@ CarLight::CarLight(const double stepTime, const int ledCount, const ColorConvert
     , positionFilter(stepTime, 200, 0.001)
     , blinkerPosition(0)
     , blinkerOffTime(0)
+    , blinkerSpeed((40.0/144.0) * ledCount)
 {
     for (size_t i = 0; i < ledCount; ++i)
     {
@@ -55,7 +56,7 @@ void CarLight::step()
     }
     if (blinkerPosition > leds * indicatorWidth)
     {
-        blinkerPosition -= leds * indicatorWidth;
+        blinkerPosition = 0;
         blinkerOffTime = 0;
     }
     
@@ -80,7 +81,7 @@ void CarLight::step()
     }
 
     const float indicatorTime = 0.5;
-    if (indicatorCounter++ * stepSize > indicatorTime)
+    if (indicatorCounter++ * stepSize >= indicatorTime)
     {
         if (turnOffBlinker)
         {
@@ -137,7 +138,7 @@ void CarLight::step()
             }
         }
 
-        if (((blinker == RIGHT || blinker == HAZARD) && i < leds * indicatorWidth && i > (leds * indicatorWidth - blinkerPosition))
+        if (((blinker == RIGHT || blinker == HAZARD) && i < (leds * indicatorWidth) -1 && i > (leds * indicatorWidth - blinkerPosition) -1)
         ||  (((blinker == LEFT || blinker == HAZARD) && i > leds - (leds * indicatorWidth)) && i < leds - (leds * indicatorWidth) + blinkerPosition))
         {
             rgb.r = 1.0;

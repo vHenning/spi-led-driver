@@ -82,9 +82,9 @@ private:
     double position;
     RC positionFilter;
 
-    double blinkerPosition;
+    double blinkerPosition; // [LEDs]
     double blinkerOffTime;
-    const double blinkerSpeed = 40; // LEDs per second
+    double blinkerSpeed; // LEDs per second
     const double blinkerPause = 0.3; // seconds
 };
 
