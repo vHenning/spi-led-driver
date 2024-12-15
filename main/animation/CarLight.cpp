@@ -148,9 +148,9 @@ void CarLight::step()
             rgb.b = 0.0;
         }
 
-        uint8_t red = rgb.r * max;
-        uint8_t green = rgb.g * max;
-        uint8_t blue = rgb.b * max;
+        uint8_t red = gamma8[static_cast<uint8_t>(rgb.r * max)];
+        uint8_t green = gamma8[static_cast<uint8_t>(rgb.g * max)];
+        uint8_t blue = gamma8[static_cast<uint8_t>(rgb.b * max)];
         driver->set(i, red, green, blue, 0, 0);
     }
 
