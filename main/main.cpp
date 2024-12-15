@@ -12,7 +12,7 @@ const int64_t PERIOD_MILLIS = PERIOD * 1000; // ms
 
 extern "C" void app_main(void)
 {
-    CarLight light(4, PERIOD, 30, ColorConverter::rgb(1, 0, 0));
+    CarLight light(4, PERIOD, 20, ColorConverter::rgb(1, 0, 0));
 
     bool on = true;
     int counter = 0;
