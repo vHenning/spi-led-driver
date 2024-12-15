@@ -48,6 +48,23 @@ hsv rgb2hsv(rgb in)
     return out;
 }
 
+hsvcct rgb2hsv(rgbcct in)
+{
+    hsvcct ret;
+    ret.color = rgb2hsv(in.color);
+
+    // We always want the cold and warm values to add up to the value.
+    // This ensures that we keep the same brightness when changing temperature.
+    ret.whiteValue = std::min(in.cw + in.ww, 1.0);
+
+    double coldAmount = COLD_TEMPERATURE * in.cw;
+    double warmAmount = WARM_TEMPERATURE * in.ww;
+
+    ret.whiteTemp = (coldAmount + warmAmount) / (in.cw + in.ww);
+
+    return ret;
+}
+
 rgb hsv2rgb(hsv in)
 {
     double      hh, p, q, t, ff;
@@ -104,6 +121,22 @@ rgb hsv2rgb(hsv in)
         break;
     }
     return out;
+}
+
+rgbcct hsv2rgb(hsvcct in)
+{
+    rgbcct ret;
+    ret.color = hsv2rgb(in.color);
+
+    double temperatureRange = COLD_TEMPERATURE - WARM_TEMPERATURE;
+
+    ret.cw = (in.whiteTemp - WARM_TEMPERATURE) / temperatureRange;
+    ret.ww = (COLD_TEMPERATURE - in.whiteTemp) / temperatureRange;
+
+    ret.cw *= in.whiteValue;
+    ret.ww *= in.whiteValue;
+
+    return ret;
 }
 
 uint64_t to8BitBRG(const rgb in)

@@ -1,5 +1,6 @@
 #include <freertos/FreeRTOS.h>
 
+#include "animation/colors/GammaCorrection.h"
 #include "animation/CarLight.h"
 #include "led_driver/LEDDriver.h"
 
@@ -16,41 +17,35 @@ const int64_t PERIOD_MILLIS = PERIOD * 1000; // ms
 
 extern "C" void app_main(void)
 {
-    CarLight light(PERIOD, LED_COUNT, ColorConverter::rgb(1, 0, 0));
     LEDDriver driver(GPIO_NUM_4, LED_COUNT);
 
-    bool on = true;
-    int counter = 0;
+    double temperature = ColorConverter::WARM_TEMPERATURE;
+    const double temperatureChange = 1000; // Kelvin per second
 
     TickType_t previousWake = xTaskGetTickCount();
 
     while (true)
     {
-        if (counter++ > 5 * FREQUENCY) // 5 seconds
+        temperature += temperatureChange * PERIOD;
+        if (temperature >= ColorConverter::COLD_TEMPERATURE)
         {
-            counter = 0;
-            on = !on;
-            if (on)
-            {
-                light.turnOn();
-            }
-            else
-            {
-                light.turnOff();
-            }
+            temperature = ColorConverter::WARM_TEMPERATURE;
         }
 
-        light.step();
+        ColorConverter::hsvcct color;
+        color.color.v = 0;
+        color.whiteValue = 0.7;
+        color.whiteTemp = temperature;
 
-        ColorConverter::rgb* colors = light.getPixels();
+        ColorConverter::rgbcct converted = ColorConverter::hsv2rgb(color);
 
-        for (int i = 0; i < LED_COUNT; ++i)
-        {
-            driver.set(i, ColorConverter::to8BitBRG(colors[i]));
-        }
+        uint8_t warm = converted.ww * 0xFF;
+        uint8_t cold = converted.cw * 0xFF;
 
-        driver.wait();
-        driver.refresh();
+        warm = gamma8[warm];
+        cold = gamma8[cold];
+
+        driver.set(0, 0, 0, warm, cold);
 
         xTaskDelayUntil(&previousWake, pdMS_TO_TICKS(PERIOD_MILLIS));
     }
