@@ -70,6 +70,7 @@ void LEDDriver::set(uint64_t color)
     }
     rmt_transmit_config_t transmitConfig;
     transmitConfig.loop_count = 0;
+    transmitConfig.flags.eot_level = 0;
     rmt_transmit(channel, &ledEncoder.parentEncoder, colorBuffer, BYTES_PER_LED * LED_COUNT, &transmitConfig);
 }
 
@@ -86,6 +87,7 @@ void LEDDriver::set(uint8_t red, uint8_t green, uint8_t blue, uint8_t warm, uint
     }
     rmt_transmit_config_t transmitConfig;
     transmitConfig.loop_count = 0;
+    transmitConfig.flags.eot_level = 0;
     rmt_transmit(channel, &ledEncoder.parentEncoder, colorBuffer, BYTES_PER_LED * LED_COUNT, &transmitConfig);
 }
 
@@ -107,6 +109,7 @@ void LEDDriver::refresh()
     const int BYTES_PER_LED = 5;
     rmt_transmit_config_t transmitConfig;
     transmitConfig.loop_count = 0;
+    transmitConfig.flags.eot_level = 0;
     rmt_transmit(channel, &ledEncoder.parentEncoder, colorBuffer, BYTES_PER_LED * LED_COUNT, &transmitConfig);
 }
 
