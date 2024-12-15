@@ -5,9 +5,10 @@
 #include <esp_timer.h>
 #include <esp_log.h>
 
-const double FREQUENCY = 100; // Hz
+// We are limited by the RTOS tick frequency which is 100 Hz by default on the ESP32.
+// Choose the frequency so the period is a multiple of one tick because we cannot delay for fractions of a tick.
+const double FREQUENCY = 50; // [Hz]
 const double PERIOD = 1 / FREQUENCY; // seconds
-const int64_t PERIOD_MICROS = PERIOD * 1000 * 1000; // us
 const int64_t PERIOD_MILLIS = PERIOD * 1000; // ms
 
 extern "C" void app_main(void)
@@ -17,10 +18,10 @@ extern "C" void app_main(void)
     bool on = true;
     int counter = 0;
 
+    TickType_t previousWake = xTaskGetTickCount();
+
     while (true)
     {
-        int64_t startTime = esp_timer_get_time();
-
         if (counter++ > 5 * FREQUENCY) // 5 seconds
         {
             counter = 0;
@@ -37,13 +38,6 @@ extern "C" void app_main(void)
 
         light.step();
 
-        int64_t diff = esp_timer_get_time() - startTime;
-        int64_t microsToGo = PERIOD_MICROS - diff;
-        int64_t millisToGo = microsToGo / 1000;
-
-        if (millisToGo > 0)
-        {
-            vTaskDelay(millisToGo / portTICK_PERIOD_MS); // TODO Tick time to big (10ms) for this to be accurate
-        }
+        xTaskDelayUntil(&previousWake, pdMS_TO_TICKS(PERIOD_MILLIS));
     }
 }
