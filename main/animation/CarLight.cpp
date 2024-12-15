@@ -130,13 +130,19 @@ void CarLight::step()
                 }
             }
 
-            if ((left && on && (i > 80 && i < 100)) || (!left && on && (i < 54 && i > 34)))
+            static const int rightStart = round(0.3 * leds);
+            static const int rightEnd = round(0.5 * leds);
+            static const int leftStart = round(0.5 * leds);
+            static const int leftEnd = round(0.7 * leds);
+
+            if ((left && on && (i >= leftStart && i < leftEnd)) || (!left && on && (i >= rightStart && i < rightEnd)))
             {
                 rgb.r = 0.0;
                 rgb.g = 0.0;
                 rgb.b = 1.0;
             }
         }
+
 
         if (((blinker == RIGHT || blinker == HAZARD) && i < (leds * indicatorWidth) -1 && i > (leds * indicatorWidth - blinkerPosition) -1)
         ||  (((blinker == LEFT || blinker == HAZARD) && i > leds - (leds * indicatorWidth)) && i < leds - (leds * indicatorWidth) + blinkerPosition))
