@@ -106,17 +106,17 @@ rgb hsv2rgb(hsv in)
     return out;
 }
 
-uint64_t to8BitGRB(const rgb in)
+uint64_t to8BitBRG(const rgb in)
 {
     int64_t retValue = 0;
     int64_t maxValue = 0xFF;
 
-    int64_t green = maxValue * in.g;
-    retValue = retValue | (green << 16);
+    int64_t blue = maxValue * in.b;
+    retValue = retValue | (blue << 16);
     int64_t red = maxValue * in.r;
     retValue = retValue | (red << 8);
-    int64_t blue = maxValue * in.b;
-    retValue = retValue | blue;
+    int64_t green = maxValue * in.g;
+    retValue = retValue | green;
 
     return retValue;
 }

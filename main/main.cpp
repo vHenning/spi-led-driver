@@ -46,7 +46,7 @@ extern "C" void app_main(void)
 
         for (int i = 0; i < LED_COUNT; ++i)
         {
-            driver.set(i, ColorConverter::to8BitGRB(colors[i]));
+            driver.set(i, ColorConverter::to8BitBRG(colors[i]));
         }
 
         driver.wait();

@@ -22,10 +22,10 @@ hsv rgb2hsv(rgb in);
 rgb hsv2rgb(hsv in);
 
 /// Converts given color to 8 bit values saved in the least significant bits of the returned integer
-/// Color order is Green Red Blue
+/// Color order is Blue Red Green
 /// @param in Color to convert to 8 bit values
-/// @return Format 0xGGRRBB
-uint64_t to8BitGRB(const rgb in);
+/// @return Format 0xBBRRGG
+uint64_t to8BitBRG(const rgb in);
 
 } // namespace ColorConverter
 
