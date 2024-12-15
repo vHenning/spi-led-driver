@@ -89,6 +89,27 @@ void LEDDriver::set(uint8_t red, uint8_t green, uint8_t blue, uint8_t warm, uint
     rmt_transmit(channel, &ledEncoder.parentEncoder, colorBuffer, BYTES_PER_LED * LED_COUNT, &transmitConfig);
 }
 
+void LEDDriver::set(size_t index, uint8_t red, uint8_t green, uint8_t blue, uint8_t warm, uint8_t cold)
+{
+    const int BYTES_PER_LED = 5;
+    if (index < LED_COUNT)
+    {
+        memcpy(&colorBuffer[index * BYTES_PER_LED], &green, sizeof(uint8_t));
+        memcpy(&colorBuffer[index * BYTES_PER_LED + 1], &red, sizeof(uint8_t));
+        memcpy(&colorBuffer[index * BYTES_PER_LED + 2], &blue, sizeof(uint8_t));
+        memcpy(&colorBuffer[index * BYTES_PER_LED + 3], &warm, sizeof(uint8_t));
+        memcpy(&colorBuffer[index * BYTES_PER_LED + 4], &cold, sizeof(uint8_t));
+    }
+}
+
+void LEDDriver::refresh()
+{
+    const int BYTES_PER_LED = 5;
+    rmt_transmit_config_t transmitConfig;
+    transmitConfig.loop_count = 0;
+    rmt_transmit(channel, &ledEncoder.parentEncoder, colorBuffer, BYTES_PER_LED * LED_COUNT, &transmitConfig);
+}
+
 void LEDDriver::wait()
 {
     rmt_tx_wait_all_done(channel, -1);

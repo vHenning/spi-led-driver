@@ -15,6 +15,12 @@ public:
     /// Sets all LEDs the given color
     void set(uint8_t red, uint8_t green, uint8_t blue, uint8_t warm, uint8_t cold);
 
+    /// Sets single LED. Does not actually write it to the LED.
+    void set(size_t index, uint8_t red, uint8_t green, uint8_t blue, uint8_t warm, uint8_t cold);
+
+    /// Writes currently set colors to all LEDs
+    void refresh();
+
     /// Wait (block) until rmt transmission is finished
     void wait();
 
