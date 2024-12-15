@@ -56,8 +56,6 @@ private:
     bool turnFilterOffAfterChange;
 
     int emergencyBrakeCounter;
-    int indicatorCounter;
-    bool indicatorOn;
     bool turnOffBlinker;
 
     unsigned int policeCounter;
@@ -82,9 +80,9 @@ private:
     double position;
     RC positionFilter;
 
-    double blinkerPosition; // [LEDs]
+    double blinkerPosition; // [% of total strip]
     double blinkerOffTime;
-    double blinkerSpeed; // LEDs per second
+    const double blinkerSpeed = 0.3; // % of total strip per second
     const double blinkerPause = 0.3; // seconds
 };
 

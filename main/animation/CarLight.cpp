@@ -22,8 +22,6 @@ CarLight::CarLight(const double stepTime, const int ledCount, const ColorConvert
     , turnFilterOnAfterChange(false)
     , turnFilterOffAfterChange(false)
     , emergencyBrakeCounter(0.0)
-    , indicatorCounter(0.0)
-    , indicatorOn(false)
     , turnOffBlinker(false)
     , policeCounter(0)
     , police(false)
@@ -32,7 +30,6 @@ CarLight::CarLight(const double stepTime, const int ledCount, const ColorConvert
     , positionFilter(stepTime, 200, 0.001)
     , blinkerPosition(0)
     , blinkerOffTime(0)
-    , blinkerSpeed((40.0/144.0) * ledCount)
 {
     for (size_t i = 0; i < ledCount; ++i)
     {
@@ -54,8 +51,13 @@ void CarLight::step()
     {
         blinkerOffTime += stepSize;
     }
-    if (blinkerPosition > leds * indicatorWidth)
+    if (blinkerPosition > indicatorWidth)
     {
+        if (turnOffBlinker)
+        {
+            blinker = OFF;
+            turnOffBlinker = false;
+        }
         blinkerPosition = 0;
         blinkerOffTime = 0;
     }
@@ -78,17 +80,6 @@ void CarLight::step()
         {
             emergencyBrakeCounter = 0;
         }
-    }
-
-    const float indicatorTime = 0.5;
-    if (indicatorCounter++ * stepSize >= indicatorTime)
-    {
-        if (turnOffBlinker)
-        {
-            blinker = OFF;
-        }
-        indicatorOn = !indicatorOn;
-        indicatorCounter = 0;
     }
 
     policeCounter++;
@@ -143,9 +134,13 @@ void CarLight::step()
             }
         }
 
+        int rightStart = round((indicatorWidth - blinkerPosition) * leds);
+        int rightEnd   = round(indicatorWidth * leds);
+        int leftStart  = round((1.0 - indicatorWidth) * leds);
+        int leftEnd    = round(((1.0 - indicatorWidth) + blinkerPosition) * leds);
 
-        if (((blinker == RIGHT || blinker == HAZARD) && i < (leds * indicatorWidth) -1 && i > (leds * indicatorWidth - blinkerPosition) -1)
-        ||  (((blinker == LEFT || blinker == HAZARD) && i > leds - (leds * indicatorWidth)) && i < leds - (leds * indicatorWidth) + blinkerPosition))
+        if (((blinker == RIGHT || blinker == HAZARD) && i >= rightStart && i < rightEnd)
+        ||  ((blinker == LEFT  || blinker == HAZARD) && i >= leftStart  && i < leftEnd))
         {
             rgb.r = 1.0;
             rgb.g = 1.0;
@@ -219,7 +214,6 @@ void CarLight::left()
 {
     if (blinker == OFF)
     {
-        indicatorCounter = 0;
         blinkerPosition = 0;
     }
     blinker = LEFT;
@@ -230,7 +224,6 @@ void CarLight::right()
 {
     if (blinker == OFF)
     {
-        indicatorCounter = 0;
         blinkerPosition = 0;
     }
     blinker = RIGHT;
@@ -246,7 +239,6 @@ void CarLight::hazard()
 {
     if (blinker == OFF)
     {
-        indicatorCounter = 0;
         blinkerPosition = 0;
     }
     blinker = HAZARD;
