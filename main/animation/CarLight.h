@@ -9,7 +9,7 @@
 class CarLight
 {
 public:
-    CarLight(const double stepTime, const int ledCount, const ColorConverter::rgb lightColor);
+    CarLight(const double stepTime, const int ledCount, const ColorConverter::rgbcct lightColor);
 
     void step();
 
@@ -32,17 +32,20 @@ public:
 
     /// Get current colors of all LEDs (Pixels)
     /// @return Array with size of pixel count (use getPixelCount())
-    ColorConverter::rgb* getPixels() const;
+    ColorConverter::rgbcct* getPixels() const;
 
     /// Get Pixel (LED) count
     size_t getPixelCount() const;
 
 private:
     /// Holds colors for each pixel (=LED)
-    ColorConverter::rgb* colors;
+    ColorConverter::rgbcct* colors;
 
-    /// Filters for each pixel
-    RC* filters;
+    /// Filters for each color pixel
+    RC* colorFilters;
+
+    /// Filters for each cct pixel
+    RC* whiteFilters;
 
     /// How much time passes inbetween step() calls [seconds]
     const double STEP_SIZE;
@@ -51,7 +54,7 @@ private:
     const int LED_COUNT;
 
     /// The base color we display if we are on and nothing is happening
-    ColorConverter::rgb baseColor;
+    ColorConverter::rgbcct baseColor;
 
     /// The general state that can be modified using the public turnOn/Off() functions
     bool on;
@@ -66,8 +69,11 @@ private:
     } blinker;
     bool policeOn;
 
-    /// Brightness of all LEDs
-    double brightness;
+    /// Brightness of all RGB LEDs
+    double colorBrightness;
+
+    /// Brightness of all CCT LEDs
+    double whiteBrightness;
 
     /// Use individual LED filters?
     bool useFilter;
@@ -108,7 +114,8 @@ private:
     /// Counts the steps spent in police mode [-]
     unsigned int policeCounter;
 
-    const double NORMAL_BRIGHTNESS = 0.3;
+    const double NORMAL_COLOR_BRIGHTNESS = 0.0;
+    const double NORMAL_WHITE_BRIGHTNESS = 0.7;
     const double BRAKE_BRIGHTNESS = 1.0;
 };
 

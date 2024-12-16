@@ -154,4 +154,17 @@ uint64_t to8BitBRG(const rgb in)
     return retValue;
 }
 
+uint64_t to8BitWWBRG(const rgbcct in)
+{
+    int64_t retValue = to8BitBRG(in.color);
+    int64_t maxValue = 0xFF;
+
+    int64_t cold = maxValue * in.cw;
+    retValue = retValue | (cold << 32);
+    int64_t warm = maxValue * in.ww;
+    retValue = retValue | (warm << 24);
+
+    return retValue;
+}
+
 } // namespace ColorConverter

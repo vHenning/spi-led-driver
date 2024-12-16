@@ -44,6 +44,12 @@ rgbcct hsv2rgb(hsvcct in);
 /// @return Format 0xBBRRGG
 uint64_t to8BitBRG(const rgb in);
 
+/// Converts given color to 8 bit values saved in the least significant bits of the returned integer
+/// Color order is cold warm blue red green
+/// @param in Color to convert to 8 bit values
+/// @return Format 0xCWWWBBRRGG
+uint64_t to8BitWWBRG(const rgbcct in);
+
 } // namespace ColorConverter
 
 #endif // COLOR_CONVERTER_H

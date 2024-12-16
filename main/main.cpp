@@ -18,34 +18,40 @@ const int64_t PERIOD_MILLIS = PERIOD * 1000; // ms
 extern "C" void app_main(void)
 {
     LEDDriver driver(GPIO_NUM_4, LED_COUNT);
-
-    double temperature = ColorConverter::WARM_TEMPERATURE;
-    const double temperatureChange = 1000; // Kelvin per second
+    ColorConverter::hsvcct color(ColorConverter::hsv(0, 0, 0), 4000, 1);
+    CarLight light(PERIOD, LED_COUNT, ColorConverter::hsv2rgb(color));
+    light.turnOn();
+    bool on = true;
+    int counter = 0;
 
     TickType_t previousWake = xTaskGetTickCount();
 
     while (true)
     {
-        temperature += temperatureChange * PERIOD;
-        if (temperature >= ColorConverter::COLD_TEMPERATURE)
+        if (counter++ >= 5 * FREQUENCY) // 5 seconds
         {
-            temperature = ColorConverter::WARM_TEMPERATURE;
+            counter = 0;
+            on = !on;
+            if (on)
+            {
+                light.turnOn();
+            }
+            else
+            {
+                light.turnOff();
+            }
         }
 
-        ColorConverter::hsvcct color;
-        color.color.v = 0;
-        color.whiteValue = 0.7;
-        color.whiteTemp = temperature;
+        light.step();
+        ColorConverter::rgbcct* colors = light.getPixels();
 
-        ColorConverter::rgbcct converted = ColorConverter::hsv2rgb(color);
+        for (int i = 0; i < LED_COUNT; ++i)
+        {
+            driver.set(i, ColorConverter::to8BitWWBRG(colors[i]));
+        }
 
-        uint8_t warm = converted.ww * 0xFF;
-        uint8_t cold = converted.cw * 0xFF;
-
-        warm = gamma8[warm];
-        cold = gamma8[cold];
-
-        driver.set(0, 0, 0, warm, cold);
+        driver.wait();
+        driver.refresh();
 
         xTaskDelayUntil(&previousWake, pdMS_TO_TICKS(PERIOD_MILLIS));
     }

@@ -8,9 +8,10 @@
 #include "colors/ColorConverter.h"
 #include "colors/GammaCorrection.h"
 
-CarLight::CarLight(const double stepTime, const int ledCount, const ColorConverter::rgb lightColor)
-    : colors(new ColorConverter::rgb[ledCount])
-    , filters(new RC[ledCount])
+CarLight::CarLight(const double stepTime, const int ledCount, const ColorConverter::rgbcct lightColor)
+    : colors(new ColorConverter::rgbcct[ledCount])
+    , colorFilters(new RC[ledCount])
+    , whiteFilters(new RC[ledCount])
     , STEP_SIZE(stepTime)
     , LED_COUNT(ledCount)
     , baseColor(lightColor)
@@ -19,7 +20,8 @@ CarLight::CarLight(const double stepTime, const int ledCount, const ColorConvert
     , emergencyBraking(false)
     , blinker(OFF)
     , policeOn(false)
-    , brightness(0.0)
+    , colorBrightness(0.0)
+    , whiteBrightness(0.0)
     , useFilter(true)
     , turnFilterOnAfterChange(false)
     , turnFilterOffAfterChange(false)
@@ -33,11 +35,13 @@ CarLight::CarLight(const double stepTime, const int ledCount, const ColorConvert
 {
     for (size_t i = 0; i < ledCount; ++i)
     {
-        colors[i] = ColorConverter::rgb(0, 0, 0);
-        filters[i] = RC(STEP_SIZE, 100, 0.001);
+        colors[i] = ColorConverter::rgbcct(ColorConverter::rgb(0, 0, 0), 0, 0);
+        colorFilters[i] = RC(STEP_SIZE, 100, 0.001);
+        whiteFilters[i] = RC(STEP_SIZE, 100, 0.001);
     }
 
-    brightness = NORMAL_BRIGHTNESS;
+    colorBrightness = NORMAL_COLOR_BRIGHTNESS;
+    whiteBrightness = NORMAL_WHITE_BRIGHTNESS;
 }
 
 void CarLight::step()
@@ -62,12 +66,13 @@ void CarLight::step()
         blinkerOffTime = 0;
     }
 
-    ColorConverter::hsv hsv = ColorConverter::rgb2hsv(baseColor);
+    ColorConverter::hsvcct hsv = ColorConverter::rgb2hsv(baseColor);
 
     static const double emergencyBrakeHalfPeriod = 1.0 / (EMERGENCY_BRAKE_FREQUENCY * 2);
     if (emergencyBraking)
     {
-        brightness = emergencyBrakeCounter++ * STEP_SIZE > emergencyBrakeHalfPeriod ? NORMAL_BRIGHTNESS : BRAKE_BRIGHTNESS;
+        colorBrightness = emergencyBrakeCounter++ * STEP_SIZE > emergencyBrakeHalfPeriod ? NORMAL_COLOR_BRIGHTNESS : BRAKE_BRIGHTNESS;
+        whiteBrightness = 0.0;
 
         if (emergencyBrakeCounter * STEP_SIZE > 2 * emergencyBrakeHalfPeriod)
         {
@@ -80,20 +85,24 @@ void CarLight::step()
     for (size_t i = 0; i < LED_COUNT; ++i)
     {
         bool illuminate = i < floor(position) || i > LED_COUNT - ceil(position);
-        double localBrightness = illuminate ? brightness : 0.0;
-        hsv.v = useFilter ? filters[i].step(localBrightness) : localBrightness;
+        double localColorBrightness = illuminate ? colorBrightness : 0.0;
+        double localWhiteBrightness = illuminate ? whiteBrightness : 0.0;
+        double colorValue = useFilter ? colorFilters[i].step(localColorBrightness) : localColorBrightness;
+        double whiteValue = useFilter ? whiteFilters[i].step(localWhiteBrightness) : localWhiteBrightness;
+        hsv.color.v = colorValue;
+        hsv.whiteValue = whiteValue;
         if (turnFilterOnAfterChange)
         {
             useFilter = true;
             turnFilterOnAfterChange = false;
         }
-        if (abs(hsv.v - localBrightness) < std::numeric_limits<double>::epsilon() && turnFilterOffAfterChange)
+        if (abs(whiteValue - localWhiteBrightness) < std::numeric_limits<double>::epsilon() && abs(colorValue - localColorBrightness) < std::numeric_limits<double>::epsilon() && turnFilterOffAfterChange)
         {
             useFilter = false;
             turnFilterOffAfterChange = false;
         }
 
-        ColorConverter::rgb rgb = ColorConverter::hsv2rgb(hsv);
+        ColorConverter::rgbcct rgb = ColorConverter::hsv2rgb(hsv);
 
         if (policeOn)
         {
@@ -121,9 +130,11 @@ void CarLight::step()
 
             if ((left && on && (i >= leftStart && i < leftEnd)) || (!left && on && (i >= rightStart && i < rightEnd)))
             {
-                rgb.r = 0.0;
-                rgb.g = 0.0;
-                rgb.b = 1.0;
+                rgb.color.r = 0.0;
+                rgb.color.g = 0.0;
+                rgb.color.b = 1.0;
+                rgb.cw = 0;
+                rgb.ww = 0;
             }
         }
 
@@ -135,23 +146,29 @@ void CarLight::step()
         if (((blinker == RIGHT || blinker == HAZARD) && i >= rightStart && i < rightEnd)
         ||  ((blinker == LEFT  || blinker == HAZARD) && i >= leftStart  && i < leftEnd))
         {
-            rgb.r = 1.0;
-            rgb.g = 1.0;
-            rgb.b = 0.0;
+            rgb.color.r = 1.0;
+            rgb.color.g = 1.0;
+            rgb.color.b = 0.0;
+            rgb.cw = 0;
+            rgb.ww = 0;
         }
 
         static const double max = 0xFF;
-        uint8_t red = gamma8[static_cast<uint8_t>(rgb.r * max)];
-        uint8_t green = gamma8[static_cast<uint8_t>(rgb.g * max)];
-        uint8_t blue = gamma8[static_cast<uint8_t>(rgb.b * max)];
+        uint8_t red = gamma8[static_cast<uint8_t>(rgb.color.r * max)];
+        uint8_t green = gamma8[static_cast<uint8_t>(rgb.color.g * max)];
+        uint8_t blue = gamma8[static_cast<uint8_t>(rgb.color.b * max)];
+        uint8_t warm = gamma8[static_cast<uint8_t>(rgb.ww * max)];
+        uint8_t cold = gamma8[static_cast<uint8_t>(rgb.cw * max)];
 
-        colors[i].r = red / max;
-        colors[i].g = green / max;
-        colors[i].b = blue / max;
+        colors[i].color.r = red / max;
+        colors[i].color.g = green / max;
+        colors[i].color.b = blue / max;
+        colors[i].ww = warm / max;
+        colors[i].cw = cold / max;
     }
 }
 
-ColorConverter::rgb* CarLight::getPixels() const
+ColorConverter::rgbcct* CarLight::getPixels() const
 {
     return colors;
 }
@@ -174,14 +191,16 @@ void CarLight::turnOff()
 void CarLight::turnOnBrake()
 {
     braking = true;
-    brightness = BRAKE_BRIGHTNESS;
+    colorBrightness = BRAKE_BRIGHTNESS;
+    whiteBrightness = 0;
     useFilter = false;
 }
 
 void CarLight::turnOffBrake()
 {
     braking = false;
-    brightness = NORMAL_BRIGHTNESS;
+    colorBrightness = NORMAL_COLOR_BRIGHTNESS;
+    whiteBrightness = NORMAL_WHITE_BRIGHTNESS;
     if (!emergencyBraking)
     {
         turnFilterOnAfterChange = true;
