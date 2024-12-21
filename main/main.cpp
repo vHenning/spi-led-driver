@@ -1,7 +1,10 @@
 #include <freertos/FreeRTOS.h>
 
+#include "WifiCredentials.h"
+
 #include "animation/colors/GammaCorrection.h"
 #include "animation/CarLight.h"
+#include "connect/Connection.h"
 #include "led_driver/LEDDriver.h"
 
 #include <esp_timer.h>
@@ -20,27 +23,13 @@ extern "C" void app_main(void)
     LEDDriver driver(GPIO_NUM_4, LED_COUNT);
     ColorConverter::hsvcct color(ColorConverter::hsv(0, 0, 0), 4000, 1);
     CarLight light(PERIOD, LED_COUNT, ColorConverter::hsv2rgb(color));
-    light.turnOn();
-    bool on = true;
-    int counter = 0;
+    Connection conn(WIFI_SSID, WIFI_PASSWORD);
 
     TickType_t previousWake = xTaskGetTickCount();
 
     while (true)
     {
-        if (counter++ >= 5 * FREQUENCY) // 5 seconds
-        {
-            counter = 0;
-            on = !on;
-            if (on)
-            {
-                light.turnOn();
-            }
-            else
-            {
-                light.turnOff();
-            }
-        }
+        conn.on ? light.turnOn() : light.turnOff();
 
         light.step();
         ColorConverter::rgbcct* colors = light.getPixels();
