@@ -90,7 +90,7 @@ void Connection::udpTask(void* args)
     sockaddr_in myAddress;
     myAddress.sin_family = AF_INET;
     myAddress.sin_addr.s_addr = INADDR_ANY;
-    myAddress.sin_port = htons(6000);
+    myAddress.sin_port = htons(8002);
     bind(sock, (sockaddr*) &myAddress, sizeof(myAddress));
 
     const size_t BUFFER_SIZE = 512;
