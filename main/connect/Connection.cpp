@@ -6,7 +6,6 @@
 #include <lwip/sockets.h>
 
 Connection::Connection(const char* ssid, const char* password)
-    : on(false)
 {
     // NVS is used for SSID and password storage
     esp_err_t ret = nvs_flash_init();
@@ -95,7 +94,7 @@ void Connection::udpTask(void* args)
     bind(sock, (sockaddr*) &myAddress, sizeof(myAddress));
 
     const size_t BUFFER_SIZE = 512;
-    char buffer[BUFFER_SIZE];
+    uint8_t buffer[BUFFER_SIZE];
 
     sockaddr_in fromAddress;
     socklen_t fromLength;
@@ -103,21 +102,6 @@ void Connection::udpTask(void* args)
     while (true)
     {
         size_t received = recvfrom(sock, buffer, BUFFER_SIZE, 0, (sockaddr*) &fromAddress, &fromLength);
-        char ipString[64];
-        inet_ntop(AF_INET, &fromAddress.sin_addr, ipString, 64);
-
-        buffer[received - 1] = 0;
-
-        ESP_LOGI("Connection", "Received message");
-        if (strcmp((char*) buffer, "on") == 0)
-        {
-            ESP_LOGI("Connection", "On");
-            instance->on = true;
-        }
-        if (strcmp((char*) buffer, "off") == 0)
-        {
-            ESP_LOGI("Connection", "Off");
-            instance->on = false;
-        }
+        instance->packetHandler(buffer, received);
     }
 }

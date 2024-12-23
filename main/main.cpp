@@ -5,6 +5,7 @@
 #include "animation/colors/GammaCorrection.h"
 #include "animation/CarLight.h"
 #include "connect/Connection.h"
+#include "connect/LEDProtocol.h"
 #include "led_driver/LEDDriver.h"
 
 #include <esp_timer.h>
@@ -24,13 +25,14 @@ extern "C" void app_main(void)
     ColorConverter::hsvcct color(ColorConverter::hsv(0, 0, 0), 4000, 1);
     CarLight light(PERIOD, LED_COUNT, ColorConverter::hsv2rgb(color));
     Connection conn(WIFI_SSID, WIFI_PASSWORD);
+    LEDProtocol ledProtocol;
+
+    conn.packetHandler = std::bind(&LEDProtocol::parse, &ledProtocol, std::placeholders::_1, std::placeholders::_2);
 
     TickType_t previousWake = xTaskGetTickCount();
 
     while (true)
     {
-        conn.on ? light.turnOn() : light.turnOff();
-
         light.step();
         ColorConverter::rgbcct* colors = light.getPixels();
 

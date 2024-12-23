@@ -1,0 +1,234 @@
+#include "LEDProtocol.h"
+
+#include <esp_log.h>
+
+LEDProtocol::LEDProtocol() {}
+
+void LEDProtocol::parse(const uint8_t* buffer, const size_t &size)
+{
+	if (size < 4)
+	{
+		ESP_LOGI("LED_Protocol", "Message was invalid (Shorter than 4)");
+		return;
+	}
+
+	uint32_t id = 0;
+	memcpy(&id, buffer, sizeof(uint32_t));
+
+	switch (id)
+	{
+		case 0x100:
+		{
+			executeMessage(ColorMessage(&buffer[sizeof(uint32_t)]));
+			break;
+		}
+		case 0x101:
+		{
+			executeMessage(DimMessage(&buffer[sizeof(uint32_t)]));
+			break;
+		}
+		case 0x102:
+		{
+			executeMessage(ValueMessage(&buffer[sizeof(uint32_t)]));
+			break;
+		}
+		case 0x103:
+		{
+			executeMessage(FilterMessage(&buffer[sizeof(uint32_t)]));
+			break;
+		}
+		case 0x104:
+		{
+			executeMessage(SetFilterValuesMessage(&buffer[sizeof(uint32_t)]));
+			break;
+		}
+		case 0x105:
+		{
+			executeMessage(SetFilterValuesBufferMessage(&buffer[sizeof(uint32_t)]));
+			break;
+		}
+		default:
+		{
+			break;
+		}
+	}
+}
+
+void LEDProtocol::executeMessage(const ColorMessage &message)
+{
+	// Shift 8 bits to the right because we only support 8 bit and message holds 16 bit values
+	unsigned char red = message.red >> 8;
+	unsigned char green = message.green >> 8;
+	unsigned char blue = message.blue >> 8;
+
+	switch (message.channel)
+	{
+	case 0:
+		// led0.setColor(red, green, blue);
+		break;
+	case 1:
+		// led1.setColor(red, green, blue);
+		break;
+	default:
+		break;
+	}
+}
+
+LEDProtocol::ColorMessage::ColorMessage(const uint8_t* buffer) : LEDMessage(0x100, buffer)
+{
+	const size_t colorSize = sizeof(uint16_t);
+
+	memcpy(&red,   &message[0 * colorSize], colorSize);
+	memcpy(&green, &message[1 * colorSize], colorSize);
+	memcpy(&blue,  &message[2 * colorSize], colorSize);
+}
+
+void LEDProtocol::executeMessage(const DimMessage &message)
+{
+	switch (message.channel)
+	{
+	case 0:
+		// dim0 = message.dim;
+		break;
+	case 1:
+		// dim1 = message.dim;
+		break;
+	default:
+		break;
+	}
+}
+
+LEDProtocol::DimMessage::DimMessage(const uint8_t* buffer) : LEDMessage(0x101, buffer)
+{
+	memcpy(&dim, message, sizeof(double));
+}
+
+void LEDProtocol::executeMessage(const ValueMessage &message)
+{
+	// Shift 8 bits to the right because we only support 8 bit and message holds 16 bit values
+	unsigned char red = message.red >> 8;
+	unsigned char green = message.green >> 8;
+	unsigned char blue = message.blue >> 8;
+
+	switch (message.channel)
+	{
+	case 0:
+		// led0.set(red, green, blue, message.raw);
+		break;
+	case 1:
+		// led1.set(red, green, blue, message.raw);
+		break;
+	default:
+		break;
+	}
+}
+
+LEDProtocol::ValueMessage::ValueMessage(const uint8_t* buffer) : LEDMessage(0x102, buffer)
+{
+	const size_t colorSize = sizeof(uint16_t);
+
+	memcpy(&red,   &message[0 * colorSize], colorSize);
+	memcpy(&green, &message[1 * colorSize], colorSize);
+	memcpy(&blue,  &message[2 * colorSize], colorSize);
+
+	uint8_t rawChar = 0;
+
+	memcpy(&rawChar, &message[3 * colorSize], sizeof(uint8_t));
+	raw = 0x01 & rawChar;
+}
+
+void LEDProtocol::executeMessage(const FilterMessage &message)
+{
+	switch (message.channel)
+	{
+	case 0:
+		// if (message.useFilter && !led0.usesFilter())
+		// {
+		// 	led0.useFilter(stepSize);
+		// }
+		// else if (!message.useFilter)
+		// {
+		// 	led0.stopUsingFilter();
+		// }
+		break;
+	case 1:
+		// if (message.useFilter && !led1.usesFilter())
+		// {
+		// 	led1.useFilter(stepSize);
+		// }
+		// else if (!message.useFilter)
+		// {
+		// 	led1.stopUsingFilter();
+		// }
+		break;
+	default:
+		break;
+	}
+}
+
+LEDProtocol::FilterMessage::FilterMessage(const uint8_t* buffer) : LEDMessage(0x103, buffer)
+{
+	uint8_t filterChar = 0;
+	memcpy(&filterChar, message, sizeof(uint8_t));
+
+	useFilter = 0x01 & filterChar;
+}
+
+void LEDProtocol::executeMessage(const SetFilterValuesMessage &message)
+{
+	switch (message.channel)
+	{
+	case 0:
+		// if (led0.getFilter() == 0)
+		// {
+		// 	led0.useFilter(stepSize);
+		// }
+		// led0.getFilter()->setFilterValues(message.capacitance, message.resistance);
+		break;
+	case 1:
+		// if (led1.getFilter() == 0)
+		// {
+		// 	led1.useFilter(stepSize);
+		// }
+		// led1.getFilter()->setFilterValues(message.capacitance, message.resistance);
+		break;
+	default:
+		break;
+	}
+}
+
+LEDProtocol::SetFilterValuesMessage::SetFilterValuesMessage(const uint8_t* buffer) : LEDMessage(0x104, buffer)
+{
+	size_t valueSize = sizeof(double);
+	memcpy(&capacitance, message, valueSize);
+	memcpy(&resistance, &message[valueSize], valueSize);
+}
+
+void LEDProtocol::executeMessage(const SetFilterValuesBufferMessage &message)
+{
+	executeMessage(static_cast<SetFilterValuesMessage>(message));
+
+	// LowPass* filter = 0;
+	// switch (message.channel)
+	// {
+	// case 0:
+	// 	filter = led0.getFilter();
+	// 	break;
+	// case 1:
+	// 	filter = led1.getFilter();
+	// 	break;
+	// default:
+	// 	return;
+	// }
+
+	// filter->setDelayedValues(message.x1, message.y1);
+}
+
+LEDProtocol::SetFilterValuesBufferMessage::SetFilterValuesBufferMessage(const uint8_t* buffer) : SetFilterValuesMessage(buffer)
+{
+	id = 0x105;
+
+	size_t valueSize = sizeof(double);
+	memcpy(&x1, &message[16], valueSize);
+	memcpy(&y1, &message[24], valueSize);
+}
