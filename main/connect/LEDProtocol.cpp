@@ -47,6 +47,16 @@ void LEDProtocol::parse(const uint8_t* buffer, const size_t &size)
 			executeMessage(SetFilterValuesBufferMessage(&buffer[sizeof(uint32_t)]));
 			break;
 		}
+		case 0x106:
+		{
+			executeMessage(WhiteDimMessage(&buffer[sizeof(uint32_t)]));
+			break;
+		}
+		case 0x107:
+		{
+			executeMessage(WhiteTemperatureMessage(&buffer[sizeof(uint32_t)]));
+			break;
+		}
 		default:
 		{
 			break;
@@ -135,6 +145,44 @@ LEDProtocol::ValueMessage::ValueMessage(const uint8_t* buffer) : LEDMessage(0x10
 
 	memcpy(&rawChar, &message[3 * colorSize], sizeof(uint8_t));
 	raw = 0x01 & rawChar;
+}
+
+void LEDProtocol::executeMessage(const WhiteTemperatureMessage &message)
+{
+	switch (message.channel)
+	{
+	case 0:
+		ESP_LOGI("LEDProtocol", "White Temperature %f", message.temperature);
+		break;
+	case 1:
+		break;
+	default:
+		break;
+	}
+}
+
+LEDProtocol::WhiteTemperatureMessage::WhiteTemperatureMessage(const uint8_t* buffer) : LEDMessage(0x107, buffer)
+{
+	memcpy(&temperature, message, sizeof(double));
+}
+
+void LEDProtocol::executeMessage(const WhiteDimMessage &message)
+{
+	switch (message.channel)
+	{
+	case 0:
+		ESP_LOGI("LEDProtocol", "Dim White %f", message.dim);
+		break;
+	case 1:
+		break;
+	default:
+		break;
+	}
+}
+
+LEDProtocol::WhiteDimMessage::WhiteDimMessage(const uint8_t* buffer) : LEDMessage(0x106, buffer)
+{
+	memcpy(&dim, message, sizeof(double));
 }
 
 void LEDProtocol::executeMessage(const FilterMessage &message)

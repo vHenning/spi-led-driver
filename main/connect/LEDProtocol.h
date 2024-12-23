@@ -54,6 +54,13 @@ protected:
 		double dim;
 	};
 
+	struct WhiteDimMessage : LEDMessage
+	{
+		WhiteDimMessage(const uint8_t* buffer);
+
+		double dim;
+	};
+
 	struct ValueMessage : LEDMessage
 	{
 		ValueMessage(const uint8_t* buffer);
@@ -62,6 +69,13 @@ protected:
 		uint16_t green;
 		uint16_t blue;
 		bool raw;
+	};
+
+	struct WhiteTemperatureMessage : LEDMessage
+	{
+		WhiteTemperatureMessage(const uint8_t* buffer);
+
+		double temperature;
 	};
 
 	struct FilterMessage : LEDMessage
@@ -92,7 +106,9 @@ protected:
 	 */
 	void executeMessage(const ColorMessage &message);
 	void executeMessage(const DimMessage &message);
+	void executeMessage(const WhiteDimMessage &message);
 	void executeMessage(const ValueMessage &message);
+	void executeMessage(const WhiteTemperatureMessage &message);
 	void executeMessage(const FilterMessage &message);
 	void executeMessage(const SetFilterValuesMessage &message);
 	void executeMessage(const SetFilterValuesBufferMessage &message);
