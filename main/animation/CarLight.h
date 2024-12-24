@@ -30,6 +30,9 @@ public:
     void turnOnPolice();
     void turnOffPolice();
 
+    void setColor(float red, float green, float blue);
+    ColorConverter::rgb getColor() const;
+
     /// Get current colors of all LEDs (Pixels)
     /// @return Array with size of pixel count (use getPixelCount())
     ColorConverter::rgbcct* getPixels() const;

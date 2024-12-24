@@ -267,3 +267,13 @@ void CarLight::turnOffPolice()
 {
     policeOn = false;
 }
+
+void CarLight::setColor(float red, float green, float blue)
+{
+    baseColor.color = ColorConverter::rgb(red, green, blue);
+}
+
+ColorConverter::rgb CarLight::getColor() const
+{
+    return baseColor.color;
+}

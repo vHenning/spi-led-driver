@@ -2,7 +2,9 @@
 
 #include <esp_log.h>
 
-LEDProtocol::LEDProtocol() {}
+LEDProtocol::LEDProtocol(CarLight* light)
+	: lightDriver(light)
+{}
 
 void LEDProtocol::parse(const uint8_t* buffer, const size_t &size)
 {
@@ -66,18 +68,17 @@ void LEDProtocol::parse(const uint8_t* buffer, const size_t &size)
 
 void LEDProtocol::executeMessage(const ColorMessage &message)
 {
-	// Shift 8 bits to the right because we only support 8 bit and message holds 16 bit values
-	unsigned char red = message.red >> 8;
-	unsigned char green = message.green >> 8;
-	unsigned char blue = message.blue >> 8;
+	float red = static_cast<float>(message.red) / 0xFFFF;
+	float green = static_cast<float>(message.green) / 0xFFFF;
+	float blue = static_cast<float>(message.blue) / 0xFFFF;
 
 	switch (message.channel)
 	{
 	case 0:
-		// led0.setColor(red, green, blue);
+		ESP_LOGI("LEDProtocol", "Color Message RGB %.02f %.02f %.02f", red, green, blue);
+		lightDriver->setColor(red, green, blue);
 		break;
 	case 1:
-		// led1.setColor(red, green, blue);
 		break;
 	default:
 		break;

@@ -25,7 +25,7 @@ extern "C" void app_main(void)
     ColorConverter::hsvcct color(ColorConverter::hsv(0, 0, 0), 4000, 1);
     CarLight light(PERIOD, LED_COUNT, ColorConverter::hsv2rgb(color));
     Connection conn(WIFI_SSID, WIFI_PASSWORD);
-    LEDProtocol ledProtocol;
+    LEDProtocol ledProtocol(&light);
 
     conn.packetHandler = std::bind(&LEDProtocol::parse, &ledProtocol, std::placeholders::_1, std::placeholders::_2);
 

@@ -4,13 +4,15 @@
 #include <inttypes.h>
 #include <cstring>
 
+#include "../animation/CarLight.h"
+
 /**
  * Parses LED control messages
  */
 class LEDProtocol
 {
 public:
-	LEDProtocol();
+	LEDProtocol(CarLight* light);
 
 	/**
 	 * Parse a message buffer and execute its content
@@ -112,6 +114,8 @@ protected:
 	void executeMessage(const FilterMessage &message);
 	void executeMessage(const SetFilterValuesMessage &message);
 	void executeMessage(const SetFilterValuesBufferMessage &message);
+
+	CarLight* lightDriver;
 };
 
 #endif
