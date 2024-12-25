@@ -34,6 +34,9 @@ public:
     void setColor(float red, float green, float blue);
     ColorConverter::rgb getColor() const;
 
+    void setWhiteTemperature(float temperature);
+    float getWhiteTemperature() const;
+
     void setColorBrightness(float brightness);
     /// Sets Color brightness after turn on/off animation is complete
     void setColorBrightnessAfter(float brightness);

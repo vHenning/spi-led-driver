@@ -161,6 +161,7 @@ void LEDProtocol::executeMessage(const WhiteTemperatureMessage &message)
 	{
 	case 0:
 		ESP_LOGI("LEDProtocol", "White Temperature %f", message.temperature);
+		lightDriver->setWhiteTemperature(message.temperature);
 		break;
 	case 1:
 		break;

@@ -304,6 +304,22 @@ ColorConverter::rgb CarLight::getColor() const
     return baseColor.color;
 }
 
+void CarLight::setWhiteTemperature(float temperature)
+{
+    ColorConverter::hsvcct helperTemperature;
+    helperTemperature.whiteTemp = temperature;
+    helperTemperature.whiteValue = 1;
+    ColorConverter::rgbcct helperValues = ColorConverter::hsv2rgb(helperTemperature);
+    baseColor.cw = helperValues.cw;
+    baseColor.ww = helperValues.ww;
+}
+
+float CarLight::getWhiteTemperature() const
+{
+    ColorConverter::hsvcct helper = ColorConverter::rgb2hsv(baseColor);
+    return helper.whiteTemp;
+}
+
 void CarLight::setColorBrightness(float brightness)
 {
     normalColorBrightness = brightness;
