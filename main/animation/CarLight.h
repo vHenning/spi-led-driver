@@ -95,6 +95,7 @@ private:
     bool turnFilterOnAfterChange;
     bool turnFilterOffAfterChange;
     bool changeColorBrightnessAfter;
+    bool changeWhiteBrightnessAfter;
 
     /// Frequency of emergency brake pulses [Hz]
     const double EMERGENCY_BRAKE_FREQUENCY = 5;
@@ -133,6 +134,7 @@ private:
     const double BRAKE_BRIGHTNESS = 1.0;
 
     double normalColorBrightnessAfter = 0.0;
+    double normalWhiteBrightnessAfter = 0.0;
 };
 
 #endif

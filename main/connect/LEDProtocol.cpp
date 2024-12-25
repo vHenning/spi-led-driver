@@ -188,6 +188,20 @@ void LEDProtocol::executeMessage(const WhiteDimMessage &message)
 	{
 	case 0:
 		ESP_LOGI("LEDProtocol", "Dim White %f", message.dim);
+		if (lightDriver->isOn() && abs(lightDriver->getColorBrightness()) <= std::numeric_limits<double>::epsilon() && std::abs(message.dim) <= std::numeric_limits<double>::epsilon())
+		{
+			lightDriver->turnOff();
+			lightDriver->setWhiteBrightnessAfter(message.dim);
+		}
+		else if (!lightDriver->isOn() && message.dim > 0)
+		{
+			lightDriver->setWhiteBrightness(message.dim);
+			lightDriver->turnOn();
+		}
+		else
+		{
+			lightDriver->setWhiteBrightness(message.dim);
+		}
 		break;
 	case 1:
 		break;

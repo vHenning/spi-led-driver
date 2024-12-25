@@ -26,6 +26,7 @@ CarLight::CarLight(const double stepTime, const int ledCount, const ColorConvert
     , turnFilterOnAfterChange(false)
     , turnFilterOffAfterChange(false)
     , changeColorBrightnessAfter(false)
+    , changeWhiteBrightnessAfter(false)
     , emergencyBrakeCounter(0.0)
     , position(0)
     , positionFilter(stepTime, 200, 0.001)
@@ -57,6 +58,15 @@ void CarLight::step()
             colorBrightness = normalColorBrightness;
         }
         changeColorBrightnessAfter = false;
+    }
+    if (changeWhiteBrightnessAfter && (position - desiredPosition) < 1)
+    {
+        normalWhiteBrightness = normalWhiteBrightnessAfter;
+        if (!braking)
+        {
+            whiteBrightness = normalWhiteBrightness;
+        }
+        changeWhiteBrightnessAfter = false;
     }
     if (blinkerOffTime > BLINKER_PAUSE)
     {
@@ -316,12 +326,17 @@ void CarLight::setColorBrightnessAfter(float brightness)
 
 void CarLight::setWhiteBrightness(float brightness)
 {
-    // TODO
+    normalWhiteBrightness = brightness;
+    if (!braking)
+    {
+        whiteBrightness = brightness;
+    }
 }
 
 void CarLight::setWhiteBrightnessAfter(float brightness)
 {
-    // TODO
+    normalWhiteBrightnessAfter = brightness;
+    changeWhiteBrightnessAfter = true;
 }
 
 float CarLight::getWhiteBrightness() const
