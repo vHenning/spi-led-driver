@@ -8,3 +8,12 @@ RC::RC(const double& stepTime, const double& resistance, const double& capacitan
     0,
     stepTime)
 {}
+
+void RC::setFilterCoefficients(const double& capacitance, const double& resistance)
+{
+    setCoefficients(sampleTime / (sampleTime + 2 * resistance * capacitance),
+    sampleTime / (sampleTime + 2 * resistance * capacitance),
+    0,
+    (sampleTime - 2 * resistance * capacitance) / (sampleTime + 2 * resistance * capacitance),
+    0);
+}

@@ -359,3 +359,21 @@ float CarLight::getWhiteBrightness() const
 {
     return normalWhiteBrightness;
 }
+
+void CarLight::setFilterValues(float capacitance, float resistance)
+{
+    for (size_t i = 0; i < LED_COUNT; ++i)
+    {
+        colorFilters[i].setFilterCoefficients(capacitance, resistance);
+        whiteFilters[i].setFilterCoefficients(capacitance, resistance);
+    }
+}
+
+void CarLight::setInitialFilterValues(float input, float output)
+{
+    for (size_t i = 0; i < LED_COUNT; ++i)
+    {
+        colorFilters[i].setInitialValues(input, output);
+        whiteFilters[i].setInitialValues(input, output);
+    }
+}

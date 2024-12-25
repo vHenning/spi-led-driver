@@ -123,22 +123,7 @@ LEDProtocol::DimMessage::DimMessage(const uint8_t* buffer) : LEDMessage(0x101, b
 
 void LEDProtocol::executeMessage(const ValueMessage &message)
 {
-	// Shift 8 bits to the right because we only support 8 bit and message holds 16 bit values
-	unsigned char red = message.red >> 8;
-	unsigned char green = message.green >> 8;
-	unsigned char blue = message.blue >> 8;
-
-	switch (message.channel)
-	{
-	case 0:
-		// led0.set(red, green, blue, message.raw);
-		break;
-	case 1:
-		// led1.set(red, green, blue, message.raw);
-		break;
-	default:
-		break;
-	}
+	// Not implemented
 }
 
 LEDProtocol::ValueMessage::ValueMessage(const uint8_t* buffer) : LEDMessage(0x102, buffer)
@@ -237,18 +222,9 @@ void LEDProtocol::executeMessage(const SetFilterValuesMessage &message)
 	switch (message.channel)
 	{
 	case 0:
-		// if (led0.getFilter() == 0)
-		// {
-		// 	led0.useFilter(stepSize);
-		// }
-		// led0.getFilter()->setFilterValues(message.capacitance, message.resistance);
+		lightDriver->setFilterValues(message.capacitance, message.resistance);
 		break;
 	case 1:
-		// if (led1.getFilter() == 0)
-		// {
-		// 	led1.useFilter(stepSize);
-		// }
-		// led1.getFilter()->setFilterValues(message.capacitance, message.resistance);
 		break;
 	default:
 		break;
@@ -265,21 +241,16 @@ LEDProtocol::SetFilterValuesMessage::SetFilterValuesMessage(const uint8_t* buffe
 void LEDProtocol::executeMessage(const SetFilterValuesBufferMessage &message)
 {
 	executeMessage(static_cast<SetFilterValuesMessage>(message));
-
-	// LowPass* filter = 0;
-	// switch (message.channel)
-	// {
-	// case 0:
-	// 	filter = led0.getFilter();
-	// 	break;
-	// case 1:
-	// 	filter = led1.getFilter();
-	// 	break;
-	// default:
-	// 	return;
-	// }
-
-	// filter->setDelayedValues(message.x1, message.y1);
+	switch(message.channel)
+	{
+	case 0:
+		lightDriver->setInitialFilterValues(message.x1, message.y1);
+		break;
+	case 1:
+		break;
+	default:
+		break;
+	}
 }
 
 LEDProtocol::SetFilterValuesBufferMessage::SetFilterValuesBufferMessage(const uint8_t* buffer) : SetFilterValuesMessage(buffer)

@@ -22,6 +22,15 @@ void IIRSecondOrder::setInitialValues(const double &input, const double &output)
 	lastLastOutput = output;
 }
 
+void IIRSecondOrder::setCoefficients(const double &c0, const double &c1, const double &c2, const double &d0, const double &d1)
+{
+	this->c0 = c0;
+	this->c1 = c1;
+	this->c2 = c2;
+	this->d0 = d0;
+	this->d1 = d1;
+}
+
 double IIRSecondOrder::step(const double &input)
 {
 	double output = c2 * input + c1 * lastInput - d1 * lastOutput + c0 * lastLastInput - d0 * lastLastOutput;

@@ -46,6 +46,9 @@ public:
     void setWhiteBrightnessAfter(float brightness);
     float getWhiteBrightness() const;
 
+    void setFilterValues(float capacitance, float resistance);
+    void setInitialFilterValues(float input, float output);
+
     /// Get current colors of all LEDs (Pixels)
     /// @return Array with size of pixel count (use getPixelCount())
     ColorConverter::rgbcct* getPixels() const;

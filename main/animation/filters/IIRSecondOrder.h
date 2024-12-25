@@ -8,9 +8,11 @@ public:
 
 	void setInitialValues(const double &input, const double &output);
 
+	void setCoefficients(const double &c0, const double &c1, const double &c2, const double &d0, const double &d1);
+
 	double step(const double &input);
 
-private:
+protected:
 	double sampleTime;
 
 	double c0;
