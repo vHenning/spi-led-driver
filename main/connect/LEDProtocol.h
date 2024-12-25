@@ -103,6 +103,13 @@ protected:
 		double y1;
 	};
 
+	struct TurnOnOffMessage : LEDMessage
+	{
+		TurnOnOffMessage(const uint8_t* buffer);
+
+		bool on;
+	};
+
 	/**
 	 * The following methods execute the specific control messages
 	 */
@@ -114,6 +121,7 @@ protected:
 	void executeMessage(const FilterMessage &message);
 	void executeMessage(const SetFilterValuesMessage &message);
 	void executeMessage(const SetFilterValuesBufferMessage &message);
+	void executeMessage(const TurnOnOffMessage &message);
 
 	CarLight* lightDriver;
 };

@@ -61,6 +61,11 @@ void LEDProtocol::parse(const uint8_t* buffer, const size_t &size)
 			executeMessage(WhiteTemperatureMessage(&buffer[sizeof(uint32_t)]));
 			break;
 		}
+		case 0x108:
+		{
+			executeMessage(TurnOnOffMessage(&buffer[sizeof(uint32_t)]));
+			break;
+		}
 		default:
 		{
 			break;
@@ -102,20 +107,7 @@ void LEDProtocol::executeMessage(const DimMessage &message)
 	{
 	case 0:
 		ESP_LOGI("LEDProtocol", "Set Dim %f", message.dim);
-		if (lightDriver->isOn() && abs(lightDriver->getWhiteBrightness()) <= std::numeric_limits<double>::epsilon() && std::abs(message.dim) <= std::numeric_limits<double>::epsilon())
-		{
-			lightDriver->turnOff();
-			lightDriver->setColorBrightnessAfter(message.dim);
-		}
-		else if (!lightDriver->isOn() && message.dim > 0)
-		{
-			lightDriver->setColorBrightness(message.dim);
-			lightDriver->turnOn();
-		}
-		else
-		{
-			lightDriver->setColorBrightness(message.dim);
-		}
+		lightDriver->setColorBrightness(message.dim);
 		break;
 	case 1:
 		break;
@@ -188,20 +180,7 @@ void LEDProtocol::executeMessage(const WhiteDimMessage &message)
 	{
 	case 0:
 		ESP_LOGI("LEDProtocol", "Dim White %f", message.dim);
-		if (lightDriver->isOn() && abs(lightDriver->getColorBrightness()) <= std::numeric_limits<double>::epsilon() && std::abs(message.dim) <= std::numeric_limits<double>::epsilon())
-		{
-			lightDriver->turnOff();
-			lightDriver->setWhiteBrightnessAfter(message.dim);
-		}
-		else if (!lightDriver->isOn() && message.dim > 0)
-		{
-			lightDriver->setWhiteBrightness(message.dim);
-			lightDriver->turnOn();
-		}
-		else
-		{
-			lightDriver->setWhiteBrightness(message.dim);
-		}
+		lightDriver->setWhiteBrightness(message.dim);
 		break;
 	case 1:
 		break;
@@ -309,4 +288,27 @@ LEDProtocol::SetFilterValuesBufferMessage::SetFilterValuesBufferMessage(const ui
 	size_t valueSize = sizeof(double);
 	memcpy(&x1, &message[16], valueSize);
 	memcpy(&y1, &message[24], valueSize);
+}
+
+void LEDProtocol::executeMessage(const TurnOnOffMessage &message)
+{
+	switch (message.channel)
+	{
+	case 0:
+		ESP_LOGI("LEDProtocol", "Turn %s message", message.on ? "on" : "off");
+		message.on ? lightDriver->turnOn() : lightDriver->turnOff();
+	case 1:
+		break;
+	default:
+		break;
+	}
+}
+
+LEDProtocol::TurnOnOffMessage::TurnOnOffMessage(const uint8_t* buffer) : LEDMessage(0x108, buffer)
+{
+	on = false;
+	if (message[0] == 1)
+	{
+		on = true;
+	}
 }
