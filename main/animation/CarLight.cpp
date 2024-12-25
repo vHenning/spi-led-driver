@@ -25,6 +25,7 @@ CarLight::CarLight(const double stepTime, const int ledCount, const ColorConvert
     , useFilter(true)
     , turnFilterOnAfterChange(false)
     , turnFilterOffAfterChange(false)
+    , changeColorBrightnessAfter(false)
     , emergencyBrakeCounter(0.0)
     , position(0)
     , positionFilter(stepTime, 200, 0.001)
@@ -40,13 +41,23 @@ CarLight::CarLight(const double stepTime, const int ledCount, const ColorConvert
         whiteFilters[i] = RC(STEP_SIZE, 100, 0.001);
     }
 
-    colorBrightness = NORMAL_COLOR_BRIGHTNESS;
-    whiteBrightness = NORMAL_WHITE_BRIGHTNESS;
+    colorBrightness = normalColorBrightness;
+    whiteBrightness = normalWhiteBrightness;
 }
 
 void CarLight::step()
 {
-    position = positionFilter.step(on ? (LED_COUNT / 2.0) + 1 : 0);
+    double desiredPosition = on ? (LED_COUNT / 2.0) + 1 : 0;
+    position = positionFilter.step(desiredPosition);
+    if (changeColorBrightnessAfter && (position - desiredPosition) < 1)
+    {
+        normalColorBrightness = normalColorBrightnessAfter;
+        if (!braking)
+        {
+            colorBrightness = normalColorBrightness;
+        }
+        changeColorBrightnessAfter = false;
+    }
     if (blinkerOffTime > BLINKER_PAUSE)
     {
         blinkerPosition += BLINKER_SPEED * STEP_SIZE;
@@ -71,7 +82,7 @@ void CarLight::step()
     static const double emergencyBrakeHalfPeriod = 1.0 / (EMERGENCY_BRAKE_FREQUENCY * 2);
     if (emergencyBraking)
     {
-        colorBrightness = emergencyBrakeCounter++ * STEP_SIZE > emergencyBrakeHalfPeriod ? NORMAL_COLOR_BRIGHTNESS : BRAKE_BRIGHTNESS;
+        colorBrightness = emergencyBrakeCounter++ * STEP_SIZE > emergencyBrakeHalfPeriod ? normalColorBrightness : BRAKE_BRIGHTNESS;
         whiteBrightness = 0.0;
 
         if (emergencyBrakeCounter * STEP_SIZE > 2 * emergencyBrakeHalfPeriod)
@@ -188,6 +199,11 @@ void CarLight::turnOff()
     on = false;
 }
 
+bool CarLight::isOn() const
+{
+    return on;
+}
+
 void CarLight::turnOnBrake()
 {
     braking = true;
@@ -199,8 +215,8 @@ void CarLight::turnOnBrake()
 void CarLight::turnOffBrake()
 {
     braking = false;
-    colorBrightness = NORMAL_COLOR_BRIGHTNESS;
-    whiteBrightness = NORMAL_WHITE_BRIGHTNESS;
+    colorBrightness = normalColorBrightness;
+    whiteBrightness = normalWhiteBrightness;
     if (!emergencyBraking)
     {
         turnFilterOnAfterChange = true;
@@ -276,4 +292,39 @@ void CarLight::setColor(float red, float green, float blue)
 ColorConverter::rgb CarLight::getColor() const
 {
     return baseColor.color;
+}
+
+void CarLight::setColorBrightness(float brightness)
+{
+    normalColorBrightness = brightness;
+    if (!braking)
+    {
+        colorBrightness = brightness;
+    }
+}
+
+float CarLight::getColorBrightness() const
+{
+    return normalColorBrightness;
+}
+
+void CarLight::setColorBrightnessAfter(float brightness)
+{
+    normalColorBrightnessAfter = brightness;
+    changeColorBrightnessAfter = true;
+}
+
+void CarLight::setWhiteBrightness(float brightness)
+{
+    // TODO
+}
+
+void CarLight::setWhiteBrightnessAfter(float brightness)
+{
+    // TODO
+}
+
+float CarLight::getWhiteBrightness() const
+{
+    return normalWhiteBrightness;
 }

@@ -15,6 +15,7 @@ public:
 
     void turnOn();
     void turnOff();
+    bool isOn() const;
 
     void turnOnBrake();
     void turnOffBrake();
@@ -32,6 +33,15 @@ public:
 
     void setColor(float red, float green, float blue);
     ColorConverter::rgb getColor() const;
+
+    void setColorBrightness(float brightness);
+    /// Sets Color brightness after turn on/off animation is complete
+    void setColorBrightnessAfter(float brightness);
+    float getColorBrightness() const;
+
+    void setWhiteBrightness(float brightness);
+    void setWhiteBrightnessAfter(float brightness);
+    float getWhiteBrightness() const;
 
     /// Get current colors of all LEDs (Pixels)
     /// @return Array with size of pixel count (use getPixelCount())
@@ -84,6 +94,7 @@ private:
     /// Turn individual LED filters on/off after animation complete?
     bool turnFilterOnAfterChange;
     bool turnFilterOffAfterChange;
+    bool changeColorBrightnessAfter;
 
     /// Frequency of emergency brake pulses [Hz]
     const double EMERGENCY_BRAKE_FREQUENCY = 5;
@@ -117,9 +128,11 @@ private:
     /// Counts the steps spent in police mode [-]
     unsigned int policeCounter;
 
-    const double NORMAL_COLOR_BRIGHTNESS = 0.0;
-    const double NORMAL_WHITE_BRIGHTNESS = 0.7;
+    double normalColorBrightness = 0.5;
+    double normalWhiteBrightness = 0.3;
     const double BRAKE_BRIGHTNESS = 1.0;
+
+    double normalColorBrightnessAfter = 0.0;
 };
 
 #endif

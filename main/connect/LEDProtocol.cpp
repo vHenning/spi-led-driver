@@ -1,5 +1,7 @@
 #include "LEDProtocol.h"
 
+#include <math.h>
+
 #include <esp_log.h>
 
 LEDProtocol::LEDProtocol(CarLight* light)
@@ -99,10 +101,23 @@ void LEDProtocol::executeMessage(const DimMessage &message)
 	switch (message.channel)
 	{
 	case 0:
-		// dim0 = message.dim;
+		ESP_LOGI("LEDProtocol", "Set Dim %f", message.dim);
+		if (lightDriver->isOn() && abs(lightDriver->getWhiteBrightness()) <= std::numeric_limits<double>::epsilon() && std::abs(message.dim) <= std::numeric_limits<double>::epsilon())
+		{
+			lightDriver->turnOff();
+			lightDriver->setColorBrightnessAfter(message.dim);
+		}
+		else if (!lightDriver->isOn() && message.dim > 0)
+		{
+			lightDriver->setColorBrightness(message.dim);
+			lightDriver->turnOn();
+		}
+		else
+		{
+			lightDriver->setColorBrightness(message.dim);
+		}
 		break;
 	case 1:
-		// dim1 = message.dim;
 		break;
 	default:
 		break;
