@@ -7,7 +7,7 @@
 class Connection
 {
 public:
-    Connection(const char* ssid, const char* password);
+    Connection(const char* ssid, const char* password, const char* ip);
 
     std::function<void (const uint8_t*, size_t)> packetHandler;
 

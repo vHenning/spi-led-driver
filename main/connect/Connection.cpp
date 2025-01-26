@@ -2,10 +2,11 @@
 
 #include <nvs_flash.h>
 #include <esp_log.h>
+#include <esp_netif.h>
 
 #include <lwip/sockets.h>
 
-Connection::Connection(const char* ssid, const char* password)
+Connection::Connection(const char* ssid, const char* password, const char* ip)
 {
     // NVS is used for SSID and password storage
     esp_err_t ret = nvs_flash_init();
@@ -16,8 +17,16 @@ Connection::Connection(const char* ssid, const char* password)
     }
 
     esp_netif_init();
+
     esp_event_loop_create_default();
     esp_netif_t* netIF = esp_netif_create_default_wifi_sta();
+    esp_netif_ip_info_t ipInfo;
+    ipInfo.ip.addr = esp_ip4addr_aton(ip);
+    ipInfo.gw.addr = esp_ip4addr_aton("192.168.0.1");
+    ipInfo.netmask.addr = esp_ip4addr_aton("255.255.255.0");
+
+    esp_netif_dhcpc_stop(netIF);
+    esp_netif_set_ip_info(netIF, &ipInfo);
 
     esp_netif_set_hostname(netIF, "led_desk");
 
