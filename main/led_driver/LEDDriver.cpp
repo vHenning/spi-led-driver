@@ -20,7 +20,7 @@ LEDDriver::LEDDriver(gpio_num_t pin, size_t leds)
     config.clk_src = RMT_CLK_SRC_APB;
     config.gpio_num = pin;
     config.intr_priority = 0;
-    config.mem_block_symbols = 512;
+    config.mem_block_symbols = 128;
     config.resolution_hz = RESOLUTION_HZ;
     config.trans_queue_depth = 4;
     config.flags.with_dma = 0;
