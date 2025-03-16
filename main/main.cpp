@@ -17,14 +17,17 @@ const double FREQUENCY = 50; // [Hz]
 const double PERIOD = 1 / FREQUENCY; // seconds
 const int64_t PERIOD_MILLIS = PERIOD * 1000; // ms
 
-#define LED_COUNT 20
+#define TOTAL_COUNT 18
+#define LEFT_COUNT 12
+#define RIGHT_COUNT 6
 
 extern "C" void app_main(void)
 {
-    LEDDriver driver(GPIO_NUM_4, LED_COUNT);
+    LEDDriver leftDriver(GPIO_NUM_32, LEFT_COUNT);
+    LEDDriver rightDriver(GPIO_NUM_33, RIGHT_COUNT);
     ColorConverter::hsvcct color(ColorConverter::hsv(0, 0, 0), 4000, 1);
-    CarLight light(PERIOD, LED_COUNT, ColorConverter::hsv2rgb(color));
-    Connection conn(WIFI_SSID, WIFI_PASSWORD, "192.168.0.83");
+    CarLight light(PERIOD, TOTAL_COUNT, ColorConverter::hsv2rgb(color));
+    Connection conn(WIFI_SSID, WIFI_PASSWORD, "192.168.0.84");
     LEDProtocol ledProtocol(&light);
 
     conn.packetHandler = std::bind(&LEDProtocol::parse, &ledProtocol, std::placeholders::_1, std::placeholders::_2);
@@ -36,13 +39,19 @@ extern "C" void app_main(void)
         light.step();
         ColorConverter::rgbcct* colors = light.getPixels();
 
-        for (int i = 0; i < LED_COUNT; ++i)
+        for (int i = 0; i < LEFT_COUNT; ++i)
         {
-            driver.set(i, ColorConverter::to8BitWWBRG(colors[i]));
+            leftDriver.set(i, ColorConverter::to8BitWWBRG(colors[i]));
+        }
+        for (int i = 0; i < RIGHT_COUNT; ++i)
+        {
+            rightDriver.set(i, ColorConverter::to8BitWWBRG(colors[i + LEFT_COUNT]));
         }
 
-        driver.wait();
-        driver.refresh();
+        leftDriver.wait();
+        leftDriver.refresh();
+        rightDriver.wait();
+        rightDriver.refresh();
 
         xTaskDelayUntil(&previousWake, pdMS_TO_TICKS(PERIOD_MILLIS));
     }
