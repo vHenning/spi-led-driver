@@ -80,6 +80,13 @@ protected:
 		double temperature;
 	};
 
+	struct WhiteMaxBrightnessMessage: LEDMessage
+	{
+		WhiteMaxBrightnessMessage(const uint8_t* buffer);
+
+		bool maxBrightness;
+	};
+
 	struct FilterMessage : LEDMessage
 	{
 		FilterMessage(const uint8_t* buffer);
@@ -118,6 +125,7 @@ protected:
 	void executeMessage(const WhiteDimMessage &message);
 	void executeMessage(const ValueMessage &message);
 	void executeMessage(const WhiteTemperatureMessage &message);
+	void executeMessage(const WhiteMaxBrightnessMessage &message);
 	void executeMessage(const FilterMessage &message);
 	void executeMessage(const SetFilterValuesMessage &message);
 	void executeMessage(const SetFilterValuesBufferMessage &message);

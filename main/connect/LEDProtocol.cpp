@@ -66,6 +66,11 @@ void LEDProtocol::parse(const uint8_t* buffer, const size_t &size)
 			executeMessage(TurnOnOffMessage(&buffer[sizeof(uint32_t)]));
 			break;
 		}
+		case 0x109:
+		{
+			executeMessage(WhiteMaxBrightnessMessage(&buffer[sizeof(uint32_t)]));
+			break;
+		}
 		default:
 		{
 			break;
@@ -172,6 +177,24 @@ void LEDProtocol::executeMessage(const WhiteDimMessage &message)
 		break;
 	default:
 		break;
+	}
+}
+
+LEDProtocol::WhiteMaxBrightnessMessage::WhiteMaxBrightnessMessage(const uint8_t* buffer) : LEDMessage(0x109, buffer)
+{
+	maxBrightness = *message == 1;
+}
+
+void LEDProtocol::executeMessage(const WhiteMaxBrightnessMessage &message)
+{
+	switch (message.channel)
+	{
+		case 0:
+			ESP_LOGI("LEDProtocol", "Max White Brightness %s", message.maxBrightness ? "true" : "false");
+			ColorConverter::setMaxWhiteBrightness(message.maxBrightness);
+			break;
+		default:
+			break;
 	}
 }
 

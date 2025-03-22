@@ -4,6 +4,14 @@
 
 namespace ColorConverter {
 
+// If true, warm white and cold white do not add up to the brightness, but the largest one is scaled up to the brightness value
+static bool whiteMaxBrightness = true;
+
+void setMaxWhiteBrightness(bool max)
+{
+    whiteMaxBrightness = max;
+}
+
 hsv rgb2hsv(rgb in)
 {
     hsv         out;
@@ -53,9 +61,16 @@ hsvcct rgb2hsv(rgbcct in)
     hsvcct ret;
     ret.color = rgb2hsv(in.color);
 
-    // We always want the cold and warm values to add up to the value.
-    // This ensures that we keep the same brightness when changing temperature.
-    ret.whiteValue = std::min(in.cw + in.ww, 1.0);
+    if (whiteMaxBrightness)
+    {
+        ret.whiteValue = std::min(std::max(in.cw, in.ww), 1.0);
+    }
+    else
+    {
+        // We always want the cold and warm values to add up to the value.
+        // This ensures that we keep the same brightness when changing temperature.
+        ret.whiteValue = std::min(in.cw + in.ww, 1.0);
+    }
 
     double coldAmount = COLD_TEMPERATURE * in.cw;
     double warmAmount = WARM_TEMPERATURE * in.ww;
@@ -133,8 +148,21 @@ rgbcct hsv2rgb(hsvcct in)
     ret.cw = (in.whiteTemp - WARM_TEMPERATURE) / temperatureRange;
     ret.ww = (COLD_TEMPERATURE - in.whiteTemp) / temperatureRange;
 
-    ret.cw *= in.whiteValue;
-    ret.ww *= in.whiteValue;
+    if (whiteMaxBrightness)
+    {
+        // The larger one is the white value
+        float max = std::max(ret.cw, ret.ww);
+        float scaler = in.whiteValue / max;
+
+        ret.cw *= scaler;
+        ret.ww *= scaler;
+    }
+    else
+    {
+        // Both add up to the white value
+        ret.cw *= in.whiteValue;
+        ret.ww *= in.whiteValue;
+    }
 
     return ret;
 }

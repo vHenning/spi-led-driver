@@ -33,6 +33,10 @@ typedef struct {
     double whiteValue;
 } hsvcct;
 
+/// If false, the CCT brightness will be in set according to the brightness of one white channel. Pro: Brightness does not change when changing color temperature. Contra: We only get half of the brightness that both white leds could make.
+/// If true, the CCT brightness will be set to the maximum brightness that can be produced with that color temperature. Pro: Maximum white brightness. Contra: Brightness changes when changing color temperature (brightest in the middle: both white LEDs at 100%, darkest at the edges: only one white LED at 100%, the other at 0%)
+void setMaxWhiteBrightness(bool max);
+
 hsv rgb2hsv(rgb in);
 hsvcct rgb2hsv(rgbcct in);
 rgb hsv2rgb(hsv in);
