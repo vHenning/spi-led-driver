@@ -34,24 +34,58 @@ extern "C" void app_main(void)
 
     TickType_t previousWake = xTaskGetTickCount();
 
+    int64_t previous[TOTAL_COUNT];
+    int leftSkipCounter = 0;
+    int rightSkipCounter = 0;
+
     while (true)
     {
         light.step();
         ColorConverter::rgbcct* colors = light.getPixels();
 
+        bool leftChanged = false;
+        bool rightChanged = false;
         for (int i = 0; i < LEFT_COUNT; ++i)
         {
-            leftDriver.set(i, ColorConverter::to8BitWWBRG(colors[i]));
+            uint64_t converted = ColorConverter::to8BitWWBRG(colors[i]);
+            if (converted != previous[i])
+            {
+                leftChanged = true;
+            }
+            previous[i] = converted;
+            leftDriver.set(i, converted);
         }
         for (int i = 0; i < RIGHT_COUNT; ++i)
         {
-            rightDriver.set(i, ColorConverter::to8BitWWBRG(colors[i + LEFT_COUNT]));
+            uint64_t converted = ColorConverter::to8BitWWBRG(colors[i + LEFT_COUNT]);
+            if (converted != previous[i + LEFT_COUNT])
+            {
+                rightChanged = true;
+            }
+            previous[i + LEFT_COUNT] = converted;
+            rightDriver.set(i, converted);
         }
 
-        leftDriver.wait();
-        leftDriver.refresh();
-        rightDriver.wait();
-        rightDriver.refresh();
+        if (leftChanged || leftSkipCounter > FREQUENCY)
+        {
+            leftDriver.wait();
+            leftDriver.refresh();
+            leftSkipCounter = 0;
+        }
+        else
+        {
+            leftSkipCounter++;
+        }
+        if (rightChanged || rightSkipCounter > FREQUENCY)
+        {
+            rightDriver.wait();
+            rightDriver.refresh();
+            rightSkipCounter = 0;
+        }
+        else
+        {
+            rightSkipCounter++;
+        }
 
         xTaskDelayUntil(&previousWake, pdMS_TO_TICKS(PERIOD_MILLIS));
     }
