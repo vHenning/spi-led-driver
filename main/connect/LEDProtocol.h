@@ -12,7 +12,7 @@
 class LEDProtocol
 {
 public:
-	LEDProtocol(CarLight* light);
+	LEDProtocol(CarLight** light, size_t count);
 
 	/**
 	 * Parse a message buffer and execute its content
@@ -131,7 +131,9 @@ protected:
 	void executeMessage(const SetFilterValuesBufferMessage &message);
 	void executeMessage(const TurnOnOffMessage &message);
 
-	CarLight* lightDriver;
+	CarLight** lightDriver;
+
+	const size_t driverCount;
 };
 
 #endif

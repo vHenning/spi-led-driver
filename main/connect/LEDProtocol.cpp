@@ -4,8 +4,9 @@
 
 #include <esp_log.h>
 
-LEDProtocol::LEDProtocol(CarLight* light)
+LEDProtocol::LEDProtocol(CarLight** light, size_t count)
 	: lightDriver(light)
+	, driverCount(count)
 {}
 
 void LEDProtocol::parse(const uint8_t* buffer, const size_t &size)
@@ -84,16 +85,10 @@ void LEDProtocol::executeMessage(const ColorMessage &message)
 	float green = static_cast<float>(message.green) / 0xFFFF;
 	float blue = static_cast<float>(message.blue) / 0xFFFF;
 
-	switch (message.channel)
+	if (message.channel < driverCount)
 	{
-	case 0:
 		ESP_LOGI("LEDProtocol", "Color Message RGB %.02f %.02f %.02f", red, green, blue);
-		lightDriver->setColor(red, green, blue);
-		break;
-	case 1:
-		break;
-	default:
-		break;
+		lightDriver[message.channel]->setColor(red, green, blue);
 	}
 }
 
@@ -108,16 +103,10 @@ LEDProtocol::ColorMessage::ColorMessage(const uint8_t* buffer) : LEDMessage(0x10
 
 void LEDProtocol::executeMessage(const DimMessage &message)
 {
-	switch (message.channel)
+	if (message.channel < driverCount)
 	{
-	case 0:
 		ESP_LOGI("LEDProtocol", "Set Dim %f", message.dim);
-		lightDriver->setColorBrightness(message.dim);
-		break;
-	case 1:
-		break;
-	default:
-		break;
+		lightDriver[message.channel]->setColorBrightness(message.dim);
 	}
 }
 
@@ -147,16 +136,10 @@ LEDProtocol::ValueMessage::ValueMessage(const uint8_t* buffer) : LEDMessage(0x10
 
 void LEDProtocol::executeMessage(const WhiteTemperatureMessage &message)
 {
-	switch (message.channel)
+	if (message.channel < driverCount)
 	{
-	case 0:
 		ESP_LOGI("LEDProtocol", "White Temperature %f", message.temperature);
-		lightDriver->setWhiteTemperature(message.temperature);
-		break;
-	case 1:
-		break;
-	default:
-		break;
+		lightDriver[message.channel]->setWhiteTemperature(message.temperature);
 	}
 }
 
@@ -167,16 +150,10 @@ LEDProtocol::WhiteTemperatureMessage::WhiteTemperatureMessage(const uint8_t* buf
 
 void LEDProtocol::executeMessage(const WhiteDimMessage &message)
 {
-	switch (message.channel)
+	if (message.channel < driverCount)
 	{
-	case 0:
 		ESP_LOGI("LEDProtocol", "Dim White %f", message.dim);
-		lightDriver->setWhiteBrightness(message.dim);
-		break;
-	case 1:
-		break;
-	default:
-		break;
+		lightDriver[message.channel]->setWhiteBrightness(message.dim);
 	}
 }
 
@@ -187,14 +164,11 @@ LEDProtocol::WhiteMaxBrightnessMessage::WhiteMaxBrightnessMessage(const uint8_t*
 
 void LEDProtocol::executeMessage(const WhiteMaxBrightnessMessage &message)
 {
-	switch (message.channel)
+	if (message.channel < driverCount)
 	{
-		case 0:
-			ESP_LOGI("LEDProtocol", "Max White Brightness %s", message.maxBrightness ? "true" : "false");
-			ColorConverter::setMaxWhiteBrightness(message.maxBrightness);
-			break;
-		default:
-			break;
+		// TODO separate channels
+		ESP_LOGI("LEDProtocol", "Max White Brightness %s", message.maxBrightness ? "true" : "false");
+		ColorConverter::setMaxWhiteBrightness(message.maxBrightness);
 	}
 }
 
@@ -242,15 +216,9 @@ LEDProtocol::FilterMessage::FilterMessage(const uint8_t* buffer) : LEDMessage(0x
 
 void LEDProtocol::executeMessage(const SetFilterValuesMessage &message)
 {
-	switch (message.channel)
+	if (message.channel < driverCount)
 	{
-	case 0:
-		lightDriver->setFilterValues(message.capacitance, message.resistance);
-		break;
-	case 1:
-		break;
-	default:
-		break;
+		lightDriver[message.channel]->setFilterValues(message.capacitance, message.resistance);
 	}
 }
 
@@ -264,15 +232,9 @@ LEDProtocol::SetFilterValuesMessage::SetFilterValuesMessage(const uint8_t* buffe
 void LEDProtocol::executeMessage(const SetFilterValuesBufferMessage &message)
 {
 	executeMessage(static_cast<SetFilterValuesMessage>(message));
-	switch(message.channel)
+	if (message.channel < driverCount)
 	{
-	case 0:
-		lightDriver->setInitialFilterValues(message.x1, message.y1);
-		break;
-	case 1:
-		break;
-	default:
-		break;
+		lightDriver[message.channel]->setInitialFilterValues(message.x1, message.y1);
 	}
 }
 
@@ -287,15 +249,10 @@ LEDProtocol::SetFilterValuesBufferMessage::SetFilterValuesBufferMessage(const ui
 
 void LEDProtocol::executeMessage(const TurnOnOffMessage &message)
 {
-	switch (message.channel)
+	if (message.channel < driverCount)
 	{
-	case 0:
-		ESP_LOGI("LEDProtocol", "Turn %s message", message.on ? "on" : "off");
-		message.on ? lightDriver->turnOn() : lightDriver->turnOff();
-	case 1:
-		break;
-	default:
-		break;
+		ESP_LOGI("LEDProtocol", "Turn %s message channel %u", message.on ? "on" : "off", message.channel);
+		message.on ? lightDriver[message.channel]->turnOn() : lightDriver[message.channel]->turnOff();
 	}
 }
 
