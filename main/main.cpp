@@ -6,6 +6,7 @@
 #include "animation/CarLight.h"
 #include "connect/Connection.h"
 #include "connect/LEDProtocol.h"
+#include "connect/MQTTProtocol.h"
 #include "led_driver/LEDDriver.h"
 
 #include <esp_timer.h>
@@ -32,6 +33,13 @@ const gpio_num_t pins[DRIVER_COUNT] = {
     , GPIO_NUM_12
 };
 
+const char* names[DRIVER_COUNT] = {
+    "livingRoom"
+    , "livingRoomAbove"
+    // "diningRoom"
+    // , "livingRoomTV"
+};
+
 extern "C" void app_main(void)
 {
     LEDDriver** drivers = new LEDDriver*[DRIVER_COUNT];
@@ -40,6 +48,7 @@ extern "C" void app_main(void)
 
     std::vector<int64_t*> previous;
     int skipCounter[DRIVER_COUNT];
+    MQTTProtocol mqtt(WIFI_SSID, WIFI_PASSWORD, "192.168.0.80", "LED_Living_room");
     for (size_t i = 0; i < DRIVER_COUNT; ++i)
     {
         drivers[i] = new LEDDriver(pins[i], ledCounts[i]);
@@ -49,14 +58,10 @@ extern "C" void app_main(void)
         {
             previous[i][j] = 0;
         }
+        mqtt.addController(names[i], lights[i]);
         lights[i]->turnOn();
         skipCounter[i] = 0;
     }
-    Connection conn(WIFI_SSID, WIFI_PASSWORD, "192.168.0.81");
-
-    LEDProtocol ledProtocol(lights, DRIVER_COUNT);
-
-    conn.packetHandler = std::bind(&LEDProtocol::parse, &ledProtocol, std::placeholders::_1, std::placeholders::_2);
 
     TickType_t previousWake = xTaskGetTickCount();
 

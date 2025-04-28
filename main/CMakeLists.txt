@@ -5,5 +5,6 @@ idf_component_register(SRCS "main.cpp"
                             "animation/filters/RC.cpp"
                             "connect/Connection.cpp"
                             "connect/LEDProtocol.cpp"
+                            "connect/MQTTProtocol.cpp"
                             "led_driver/LEDDriver.cpp"
                     INCLUDE_DIRS ".")
