@@ -1,5 +1,6 @@
 #include "CarLight.h"
 
+#include <limits>
 #include <math.h>
 #include <stddef.h>
 
