@@ -20,24 +20,20 @@ const double FREQUENCY = 50; // [Hz]
 const double PERIOD = 1 / FREQUENCY; // seconds
 const int64_t PERIOD_MILLIS = PERIOD * 1000; // ms
 
-const size_t DRIVER_COUNT = 2;
+const char* hostname = "LED_desk";
+
+const size_t DRIVER_COUNT = 1;
 
 const int ledCounts[DRIVER_COUNT] = {
-    // 64 // Living room
-    31 // Dining room
-  , 19 // Living room
+    20 // BS Desk
 };
 
 const gpio_num_t pins[DRIVER_COUNT] = {
-    GPIO_NUM_11
-    , GPIO_NUM_12
+    GPIO_NUM_32 // BS Desk
 };
 
 const char* names[DRIVER_COUNT] = {
-    "livingRoom"
-    , "livingRoomAbove"
-    // "diningRoom"
-    // , "livingRoomTV"
+    "desk"
 };
 
 extern "C" void app_main(void)
@@ -48,7 +44,7 @@ extern "C" void app_main(void)
 
     std::vector<int64_t*> previous;
     int skipCounter[DRIVER_COUNT];
-    MQTTProtocol mqtt(WIFI_SSID, WIFI_PASSWORD, "192.168.0.80", "LED_Living_room");
+    MQTTProtocol mqtt(WIFI_SSID, WIFI_PASSWORD, "192.168.0.80", hostname);
     for (size_t i = 0; i < DRIVER_COUNT; ++i)
     {
         drivers[i] = new LEDDriver(pins[i], ledCounts[i]);
