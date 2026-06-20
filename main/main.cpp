@@ -12,85 +12,91 @@
 #include <esp_timer.h>
 #include <esp_log.h>
 
-#include <vector>
-
 // We are limited by the RTOS tick frequency which is 100 Hz by default on the ESP32.
 // Choose the frequency so the period is a multiple of one tick because we cannot delay for fractions of a tick.
 const double FREQUENCY = 50; // [Hz]
 const double PERIOD = 1 / FREQUENCY; // seconds
 const int64_t PERIOD_MILLIS = PERIOD * 1000; // ms
 
-const char* hostname = "LED_desk";
+const char* hostname = "LED_kitchenSink";
 
-const size_t DRIVER_COUNT = 1;
+const int LEFT_LED_COUNT = 12;
+const int RIGHT_LED_COUNT = 6;
 
-const int ledCounts[DRIVER_COUNT] = {
-    20 // BS Desk
-};
-
-const gpio_num_t pins[DRIVER_COUNT] = {
-    GPIO_NUM_32 // BS Desk
-};
-
-const char* names[DRIVER_COUNT] = {
-    "desk"
-};
+const gpio_num_t LEFT_PIN = GPIO_NUM_32;
+const gpio_num_t RIGHT_PIN = GPIO_NUM_33;
 
 extern "C" void app_main(void)
 {
-    LEDDriver** drivers = new LEDDriver*[DRIVER_COUNT];
-    CarLight** lights = new CarLight*[DRIVER_COUNT];
     ColorConverter::hsvcct color(ColorConverter::hsv(0, 0, 0), 4000, 1);
 
-    std::vector<int64_t*> previous;
-    int skipCounter[DRIVER_COUNT];
+    int64_t* previous = new int64_t[LEFT_LED_COUNT + RIGHT_LED_COUNT];
+    int leftSkipCounter = 0;
+    int rightSkipCounter = 0;
     MQTTProtocol mqtt(WIFI_SSID, WIFI_PASSWORD, "192.168.0.80", hostname);
-    for (size_t i = 0; i < DRIVER_COUNT; ++i)
-    {
-        drivers[i] = new LEDDriver(pins[i], ledCounts[i]);
-        lights[i] = new CarLight(PERIOD, ledCounts[i], ColorConverter::hsv2rgb(color));
-        previous.push_back(new int64_t[ledCounts[i]]);
-        for (int j = 0; j < ledCounts[i]; ++j)
-        {
-            previous[i][j] = 0;
-        }
-        mqtt.addController(names[i], lights[i]);
-        lights[i]->turnOn();
-        skipCounter[i] = 0;
+
+    LEDDriver leftDriver = LEDDriver(LEFT_PIN, LEFT_LED_COUNT);
+    LEDDriver rightDriver = LEDDriver(RIGHT_PIN, RIGHT_LED_COUNT);
+    CarLight light = CarLight(PERIOD, LEFT_LED_COUNT + RIGHT_LED_COUNT, ColorConverter::hsv2rgb(color));
+    for (int i = 0; i < LEFT_LED_COUNT + RIGHT_LED_COUNT; ++i) {
+        previous[i] = 0;
     }
+    mqtt.addController("kitchenSink", &light);
+    light.turnOn();
 
     TickType_t previousWake = xTaskGetTickCount();
 
 
     while (true)
     {
-        for (size_t i = 0; i < DRIVER_COUNT; ++i)
+        light.step();
+        ColorConverter::rgbcct* colors = light.getPixels();
+
+        bool leftChanged = false;
+        bool rightChanged = false;
+        for (size_t i = 0; i < LEFT_LED_COUNT; ++i)
         {
-            lights[i]->step();
-            ColorConverter::rgbcct* colors = lights[i]->getPixels();
+            uint64_t converted = ColorConverter::to8BitWWBRG(colors[i]);
+            if (converted != previous[i])
+            {
+                leftChanged = true;
+            }
 
-            bool changed = false;
-            for (size_t j = 0; j < ledCounts[i]; ++j)
-            {
-                uint64_t converted = ColorConverter::to8BitWWBRG(colors[j]);
-                if (converted != previous[i][j])
-                {
-                    changed = true;
-                }
+            previous[i] = converted;
+            leftDriver.set(i, converted);
+        }
+        for (size_t i = 0; i < RIGHT_LED_COUNT; ++i) {
+            uint64_t converted = ColorConverter::to8BitWWBRG(colors[i + LEFT_LED_COUNT]);
+            if (converted != previous[i + LEFT_LED_COUNT]) {
+                rightChanged = true;
+            }
+            previous[i + LEFT_LED_COUNT] = converted;
+            rightDriver.set(i, converted);
+        }
+        if (leftChanged) {
+            leftDriver.refresh();
+            leftDriver.wait();
+            leftSkipCounter = 0;
+        }
+        else {
+            leftSkipCounter++;
+        }
+        if (rightChanged) {
+            rightDriver.refresh();
+            rightDriver.wait();
+            rightSkipCounter = 0;
+        }
+        else {
+            rightSkipCounter++;
+        }
 
-                previous[i][j] = converted;
-                drivers[i]->set(j, converted);
-            }
-            if (changed || skipCounter[i] > FREQUENCY)
-            {
-                drivers[i]->refresh();
-                drivers[i]->wait();
-                skipCounter[i] = 0;
-            }
-            else
-            {
-                skipCounter[i]++;
-            }
+        if (leftSkipCounter > FREQUENCY || rightSkipCounter > FREQUENCY) {
+            leftDriver.refresh();
+            rightDriver.refresh();
+            leftDriver.wait();
+            rightDriver.wait();
+            leftSkipCounter = 0;
+            rightSkipCounter = 0;
         }
 
         xTaskDelayUntil(&previousWake, pdMS_TO_TICKS(PERIOD_MILLIS));
