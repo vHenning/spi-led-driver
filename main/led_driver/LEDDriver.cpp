@@ -26,8 +26,8 @@ LEDDriver::LEDDriver(gpio_num_t pin, size_t leds)
     config.flags.with_dma = 0;
     config.flags.invert_out = 0;
 
-    rmt_new_tx_channel(&config, &channel);
-    rmt_enable(channel);
+    ESP_ERROR_CHECK(rmt_new_tx_channel(&config, &channel));
+    ESP_ERROR_CHECK(rmt_enable(channel));
 
     // Configure data encoder (tell rmt how to send a 1 and a 0)
     rmt_bytes_encoder_config_t dataEncoderConfig;
