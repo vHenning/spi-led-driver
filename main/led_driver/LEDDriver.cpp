@@ -16,7 +16,7 @@ LEDDriver::LEDDriver(gpio_num_t pin, size_t leds)
     const int RESOLUTION_NS = 50; // [ns] (=1/20 MHZ)
 
     // Configure RMT channel
-    rmt_tx_channel_config_t config;
+    rmt_tx_channel_config_t config = {};
     config.clk_src = RMT_CLK_SRC_APB;
     config.gpio_num = pin;
     config.intr_priority = 3;
