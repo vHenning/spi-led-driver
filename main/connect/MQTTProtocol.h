@@ -9,6 +9,9 @@
 
 #include "../animation/CarLight.h"
 
+#include "../libs/nlohmann/json.hpp"
+using json = nlohmann::json;
+
 class MQTTProtocol
 {
 public:
@@ -24,6 +27,7 @@ private:
     void listen();
 
     void handleMessage(std::string topic, std::string message);
+    void handleSetCommand(json command, CarLight* controller);
 
     std::map<std::string, CarLight*> controllers;
 

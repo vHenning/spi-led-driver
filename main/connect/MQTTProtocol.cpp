@@ -4,9 +4,6 @@
 #include <esp_log.h>
 #include <string.h>
 
-#include "../libs/nlohmann/json.hpp"
-using json = nlohmann::json;
-
 MQTTProtocol::MQTTProtocol(std::string ssid, std::string key, std::string serverIP, std::string hostname)
     : client(0)
     , serverIP(serverIP)
@@ -189,7 +186,12 @@ void MQTTProtocol::handleMessage(std::string topic, std::string message)
     json msg = json::parse(message);
     try
     {
-        if (command.compare("color") == 0)
+        if (command.compare("set") == 0)
+        {
+            ESP_LOGI(tag, "Got set command");
+            handleSetCommand(msg, controller);
+        }
+        else if (command.compare("color") == 0)
         {
             float red = static_cast<float>(msg["red"]) / 0xFF00;
             float green = static_cast<float>(msg["green"]) / 0xFF00;
@@ -252,5 +254,89 @@ void MQTTProtocol::handleMessage(std::string topic, std::string message)
     catch(const std::exception& e)
     {
         ESP_LOGI("MQTTProtocol", "Caught exception trying to read MQTT topic %s message %s", topic.c_str(), message.c_str());
+    }
+}
+
+void MQTTProtocol::handleSetCommand(json command, CarLight* controller)
+{
+    if (command.contains("color"))
+    {
+        ColorConverter::setMaxWhiteBrightness(true);
+        json colorStruct = command["color"];
+        // Input is RGBWW color
+        // Convert input to RGB + temperature + RGB brightness + white brightness
+        const float MAX = 255;
+        ColorConverter::rgbcct color;
+        color.color.r = static_cast<int>(colorStruct["r"]) / MAX;
+        color.color.g = static_cast<int>(colorStruct["g"]) / MAX;
+        color.color.b = static_cast<int>(colorStruct["b"]) / MAX;
+        color.cw = static_cast<int>(colorStruct["c"]) / MAX;
+        color.ww = static_cast<int>(colorStruct["w"]) / MAX;
+        ColorConverter::hsvcct converted = ColorConverter::rgb2hsv(color);
+        controller->setColor(color.color.r, color.color.g, color.color.b);
+        controller->setColorBrightness(converted.color.v);
+        if (!std::isnan(converted.whiteTemp))
+        {
+            controller->setWhiteTemperature(converted.whiteTemp);
+        }
+        controller->setWhiteBrightness(converted.whiteValue);
+
+        ESP_LOGI(tag, "Set color rgbcw %.02f %.02f %.02f %.02f %.02f", color.color.r, color.color.g, color.color.b, color.cw, color.ww);
+        ESP_LOGI(tag, "Translated to %.02f %.02f %.02f %.02f %.02f %.02f", color.color.r, color.color.g, color.color.b, converted.color.v, converted.whiteTemp, converted.whiteValue);        
+    }
+    if (command.contains("color_temp"))
+    {
+        float temp = command["color_temp"];
+        controller->setWhiteTemperature(temp);
+        ESP_LOGI(tag, "Set white temperature %f", temp);
+    }
+    if (command.contains("brightness"))
+    {
+        const static double MAX = 255;
+        int intBrightness = command["brightness"];
+        double percent = intBrightness / MAX;
+        // We want to keep the ratio between white and color brightness.
+        // Handle color or white being off
+        float colorBrightness = controller->getColorBrightness();
+        float whiteBrightness = controller->getWhiteBrightness();
+        bool colorOff = std::abs(controller->getColorBrightness()) < std::numeric_limits<float>::epsilon();
+        bool whiteOff = std::abs(controller->getWhiteBrightness()) < std::numeric_limits<float>::epsilon();
+
+        if (colorOff && whiteOff)
+        {
+            colorBrightness = percent;
+            whiteBrightness = percent;
+        }
+        else if (colorOff)
+        {
+            whiteBrightness = percent;
+        }
+        else if (whiteOff)
+        {
+            colorBrightness = percent;
+        }
+        else
+        {
+            double ratio = colorBrightness / whiteBrightness;
+            if (colorBrightness > whiteBrightness)
+            {
+                colorBrightness = percent;
+                whiteBrightness = colorBrightness / ratio;
+            }
+            else
+            {
+                whiteBrightness = percent;
+                colorBrightness = whiteBrightness * ratio;
+            }
+        }
+        controller->setColorBrightness(colorBrightness);
+        controller->setWhiteBrightness(whiteBrightness);
+        ESP_LOGI(tag, "Set brightness: color %f, white %f", colorBrightness, whiteBrightness);
+    }
+    if (command.contains("state") && (command["state"] == "ON" || command["state"] == "OFF"))
+    {
+        bool on = command["state"] == "ON";
+        on ? controller->turnOn() : controller->turnOff();
+        ESP_LOGI(tag, "Turn %s", on ? "on" : "off");
     }
 }
