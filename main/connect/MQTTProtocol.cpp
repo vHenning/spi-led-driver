@@ -333,6 +333,30 @@ void MQTTProtocol::handleSetCommand(json command, CarLight* controller)
         controller->setWhiteBrightness(whiteBrightness);
         ESP_LOGI(tag, "Set brightness: color %f, white %f", colorBrightness, whiteBrightness);
     }
+    if (command.contains("effect"))
+    {
+        std::string effect = command["effect"];
+        bool print = false;
+        if (effect == "Off")
+        {
+            controller->turnOffBrake();
+            controller->turnOffEmergencyBrake();
+            controller->turnOffPolice();
+            controller->turnOffBlinker();
+            ESP_LOGI(tag, "Turn off effects");
+        }
+        else if (effect == "Brake")             { controller->turnOnBrake(); print = true; }
+        else if (effect == "Emergency Brake")   { controller->turnOnEmergencyBrake(); print = true; }
+        else if (effect == "Police")            { controller->turnOnPolice(); print = true; }
+        else if (effect == "Blinker Left")      { controller->turnOnLeft(); print = true; }
+        else if (effect == "Blinker Right")     { controller->turnOnRight(); print = true; }
+        else if (effect == "Hazard Blinker")    { controller->turnOnHazard(); print = true; }
+        else
+        {
+            ESP_LOGI(tag, "Got unknown effect %s", effect.c_str());
+        }
+        if (print) { ESP_LOGI(tag, "Turned on effect %s", effect.c_str()); }
+    }
     if (command.contains("state") && (command["state"] == "ON" || command["state"] == "OFF"))
     {
         bool on = command["state"] == "ON";
