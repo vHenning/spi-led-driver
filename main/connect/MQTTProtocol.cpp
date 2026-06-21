@@ -187,8 +187,6 @@ void MQTTProtocol::handleMessage(std::string topic, std::string message)
 
     CarLight* controller = iterator->second;
     json msg = json::parse(message);
-
-    const char* tag = "MQTTProtocol";
     try
     {
         if (command.compare("color") == 0)

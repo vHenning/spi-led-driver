@@ -30,6 +30,8 @@ private:
     esp_mqtt_client_handle_t client;
     std::string serverIP;
 
+    const char* tag = "MQTTProtocol";
+
     bool wifiConnected;
     bool mqttConnected;
 };
